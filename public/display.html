@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>永劫无间 · 赛点积分榜</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%; background: transparent;
+    font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  .scoreboard {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 580px;
+    background: linear-gradient(160deg, rgba(12,13,17,.92), rgba(20,16,12,.95));
+    border: 2px solid #e6c377; border-radius: 8px;
+    box-shadow: 0 0 30px rgba(230,195,119,.25), inset 0 0 40px rgba(230,195,119,.05);
+    color: #e8e6e1; transition: all .3s cubic-bezier(.4,0,.2,1);
+    user-select: none; overflow: hidden;
+  }
+  .scoreboard.collapsed { width: 280px; height: 52px; }
+  .scoreboard.collapsed .body, .scoreboard.collapsed .game-info { display: none; }
+  .scoreboard.collapsed .header { padding: 0 14px; height: 52px; }
+  .header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid rgba(230,195,119,.2);
+    background: rgba(230,195,119,.06); transition: all .3s;
+  }
+  .logo { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+  .title { font-size: 15px; font-weight: 700; color: #e6c377; letter-spacing: .06em; white-space: nowrap; text-shadow: 0 0 10px rgba(230,195,119,.4); }
+  .game-info { margin-left: auto; font-size: 12px; color: #8b8f9a; white-space: nowrap; }
+  .body { padding: 6px 10px 10px; }
+  .champion-banner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 8px; margin: 6px 0;
+    background: linear-gradient(90deg, rgba(230,195,119,.15), rgba(230,195,119,.3), rgba(230,195,119,.15));
+    border: 1px solid rgba(230,195,119,.6); border-radius: 4px;
+    font-size: 16px; font-weight: 700; color: #ffe9a8; text-shadow: 0 0 12px rgba(230,195,119,.8);
+    animation: championGlow 2s infinite alternate;
+  }
+  @keyframes championGlow { from { box-shadow: 0 0 10px rgba(230,195,119,.3); } to { box-shadow: 0 0 25px rgba(230,195,119,.8); } }
+  
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th { text-align: center; padding: 6px 2px; color: #8b8f9a; font-weight: 500; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,.08); white-space: nowrap; }
+  td { padding: 6px 2px; border-bottom: 1px solid rgba(255,255,255,.04); text-align: center; }
+  
+  .place { width: 32px; color: #8b8f9a; font-weight: 700; }
+  .place.top1 { color: #ffd700; }
+  .place.top2 { color: #c0c0c0; }
+  .place.top3 { color: #cd7f32; }
+  .name { font-weight: 500; text-align: left; padding-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .total { color: #e6c377; font-weight: 700; font-size: 15px; }
+  
+  .champion-row { background: linear-gradient(90deg, rgba(230,195,119,.2), transparent); }
+  .champion-row .name { color: #ffe9a8; }
+  .champion-tag { color: #ffd700; font-size: 11px; font-weight: 700; }
+  .empty { text-align: center; color: #555; padding: 20px; font-size: 13px; }
+  
+  .game-score { color: #ccc; font-weight: 500; }
+  .game-score.highlight { color: #e6c377; font-weight: bold; }
+  
+  .match-point-mark {
+    color: #e74c3c;
+    font-size: 10px;
+    font-weight: 900;
+    margin-left: 1px;
+    vertical-align: super;
+    text-shadow: 0 0 6px rgba(231,76,60,.8);
+  }
+</style>
+</head>
+<body>
+<div id="scoreboard" class="scoreboard">
+  <div class="header">
+    <img src="logo.png" class="logo" alt="logo" onerror="this.style.display='none'">
+    <div class="title">永劫无间 · 赛点积分榜</div>
+    <div class="game-info">第 <span id="currentGame">1</span> / 5 局</div>
+  </div>
+  <div class="body">
+    <div class="champion-banner" id="championBanner" style="display:none">
+      🏆 冠军：<span id="championName"></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px">名次</th>
+          <th style="width:80px; text-align:left;">选手</th>
+          <th style="width:45px">第1局</th>
+          <th style="width:45px">第2局</th>
+          <th style="width:45px">第3局</th>
+          <th style="width:45px">第4局</th>
+          <th style="width:45px">第5局</th>
+          <th style="width:65px">总分</th>
+        </tr>
+      </thead>
+      <tbody id="rankBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API = '';
+const scoreboard = document.getElementById('scoreboard');
+
+function render(data) {
+  const { standings, visible, currentGame, maxGames, threshold, scoreboardCollapsed } = data;
+
+  if (visible === false) { scoreboard.style.display = 'none'; return; }
+  else { scoreboard.style.display = ''; }
+
+  // 折叠状态完全由后台控制
+  if (scoreboardCollapsed) {
+    scoreboard.classList.add('collapsed');
+  } else {
+    scoreboard.classList.remove('collapsed');
+  }
+
+  document.getElementById('currentGame').textContent = (currentGame || 0) + 1;
+
+  const champion = standings.find(p => p.isChampion);
+  const banner = document.getElementById('championBanner');
+  if (champion) {
+    banner.style.display = 'flex';
+    document.getElementById('championName').textContent = champion.id;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  const tbody = document.getElementById('rankBody');
+  if (!standings || standings.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">等待数据...</td></tr>';
+    return;
+  }
+
+  let html = '';
+  standings.forEach((p, i) => {
+    const place = p.place || i + 1;
+    const placeClass = place === 1 ? 'top1' : place === 2 ? 'top2' : place === 3 ? 'top3' : '';
+    const isChampion = p.isChampion;
+    const rowClass = isChampion ? 'champion-row' : '';
+
+    html += `<tr class="${rowClass}">`;
+    html += `<td class="place ${placeClass}">${place}</td>`;
+    html += `<td class="name" title="${escapeHtml(p.id)}">${escapeHtml(p.id)}${isChampion ? ' 🏆' : ''}</td>`;
+    
+    for (let g = 0; g < maxGames; g++) {
+      const game = p.games[g];
+      const score = game ? game.gameTotal : 0;
+      const displayScore = score > 0 ? score.toFixed(1) : '-';
+      
+      let matchPointMark = '';
+      if (game && game.totalBefore < (threshold || 19) && (game.totalBefore + game.gameTotal) >= (threshold || 19)) {
+          matchPointMark = '<span class="match-point-mark" title="本局开启赛点">赛</span>';
+      }
+      
+      const highlightClass = score > 0 ? 'highlight' : '';
+      html += `<td class="game-score ${highlightClass}">${displayScore}${matchPointMark}</td>`;
+    }
+
+    html += `<td class="total">${p.total.toFixed(1)}</td>`;
+    html += `</tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+const evtSource = new EventSource(API + '/api/events');
+evtSource.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    render(data);
+  } catch (err) {
+    console.error('解析数据失败', err);
+  }
+};
+evtSource.onerror = () => {
+  console.warn('SSE 连接断开，尝试重连...');
+};
+</script>
+</body>
+</html>

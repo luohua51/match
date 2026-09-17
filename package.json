@@ -1,0 +1,12 @@
+{
+  "name": "naraka-scoreboard",
+  "version": "1.0.0",
+  "description": "永劫无间赛点积分赛记分牌",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}
