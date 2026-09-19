@@ -8,7 +8,7 @@ const DATA_FILE = path.join(__dirname, 'data.json');
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 扫描资源文件夹（英雄和头像）
+/* ============ 资源扫描 ============ */
 function getAssetFiles(dir) {
   const fullPath = path.join(__dirname, 'public', dir);
   try {
@@ -19,68 +19,94 @@ function getAssetFiles(dir) {
   } catch (e) { return []; }
 }
 
-// 默认数据结构
+/* ============ 数据结构 ============ */
+const MAX_PLAYERS = 16;
+const DISPLAY_MODES = ['hero-wall', 'focus', 'carousel', 'scoreboard', 'hidden'];
+
+function defaultPlayer(i) {
+  return {
+    id: `选手${i}`,
+    avatar: '',
+    tier: '',
+    damage: '',
+    heroes: new Array(5).fill(''),
+    kills: new Array(5).fill(0),
+    ranks: new Array(5).fill(null)
+  };
+}
+
 function defaultData() {
   const players = [];
-  for (let i = 1; i <= 8; i++) {
-    players.push({
-      id: `选手${i}`,
-      avatar: '',          // 头像文件名
-      kills: [0, 0, 0, 0, 0],
-      ranks: [null, null, null, null, null],
-      heroes: ['', '', '', '', '']  // 每局使用的英雄文件名
-    });
-  }
+  for (let i = 1; i <= 12; i++) players.push(defaultPlayer(i));
   return {
     players,
     currentGame: 0,
     threshold: 19,
     maxGames: 5,
     visible: true,
-    scoreboardCollapsed: false,   // 主记分牌折叠状态
+    scoreboardCollapsed: false,
     champion: null,
-    cardPlayerId: null            // 当前展示卡片的选手ID
+    cardPlayerId: null,
+    displayMode: 'hero-wall',
+    focusPlayerId: null,
+    carouselRunning: false
   };
 }
 
+/* ============ 数据清洗 ============ */
+function normalizeState(s) {
+  if (!Array.isArray(s.players)) s.players = [];
+  s.players.forEach(p => {
+    p.id = p.id || '未命名';
+    p.avatar = p.avatar || '';
+    p.tier = p.tier || '';
+    p.damage = p.damage || '';
+    p.heroes = Array.isArray(p.heroes) ? p.heroes : [];
+    p.kills  = Array.isArray(p.kills)  ? p.kills  : [];
+    p.ranks  = Array.isArray(p.ranks)  ? p.ranks  : [];
+    while (p.heroes.length < s.maxGames) p.heroes.push('');
+    while (p.kills.length  < s.maxGames) p.kills.push(0);
+    while (p.ranks.length  < s.maxGames) p.ranks.push(null);
+    p.heroes = p.heroes.slice(0, s.maxGames);
+    p.kills  = p.kills.slice(0, s.maxGames);
+    p.ranks  = p.ranks.slice(0, s.maxGames);
+  });
+  if (typeof s.currentGame !== 'number') s.currentGame = 0;
+  if (typeof s.threshold !== 'number') s.threshold = 19;
+  if (typeof s.maxGames !== 'number') s.maxGames = 5;
+  if (typeof s.visible !== 'boolean') s.visible = true;
+  if (typeof s.scoreboardCollapsed !== 'boolean') s.scoreboardCollapsed = false;
+  if (s.cardPlayerId === undefined) s.cardPlayerId = null;
+  if (!DISPLAY_MODES.includes(s.displayMode)) s.displayMode = 'hero-wall';
+  if (s.focusPlayerId === undefined) s.focusPlayerId = null;
+  if (typeof s.carouselRunning !== 'boolean') s.carouselRunning = false;
+  return s;
+}
+
+/* ============ 加载 ============ */
 let state = defaultData();
 
-// 加载已有数据（兼容旧版本数据结构）
 if (fs.existsSync(DATA_FILE)) {
   try {
     const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    state = Object.assign(defaultData(), saved);
-    
-    // 数据清洗与补齐（确保旧数据不报错）
-    state.players.forEach(p => {
-      p.avatar = p.avatar || '';
-      p.kills = p.kills || [];
-      p.ranks = p.ranks || [];
-      p.heroes = p.heroes || [];
-      while (p.kills.length < state.maxGames) p.kills.push(0);
-      while (p.ranks.length < state.maxGames) p.ranks.push(null);
-      while (p.heroes.length < state.maxGames) p.heroes.push('');
-      p.kills = p.kills.slice(0, state.maxGames);
-      p.ranks = p.ranks.slice(0, state.maxGames);
-      p.heroes = p.heroes.slice(0, state.maxGames);
-    });
-    
-    // 确保新增字段存在
-    if (state.scoreboardCollapsed === undefined) state.scoreboardCollapsed = false;
-    if (state.cardPlayerId === undefined) state.cardPlayerId = null;
+    state = normalizeState(Object.assign(defaultData(), saved));
+    while (state.players.length < 12) {
+      state.players.push(defaultPlayer(state.players.length + 1));
+    }
   } catch (e) {
     console.error('读取数据失败，使用默认数据', e);
   }
+} else {
+  normalizeState(state);
 }
 
 function saveData() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2));
 }
 
-// 核心计算逻辑（积分、赛点、冠军判定）
+/* ============ 积分 & 冠军 ============ */
 function computeStandings(s) {
-  const maxGames = s.maxGames;
-  const threshold = s.threshold;
+  const { maxGames, threshold } = s;
 
   const players = s.players.map((p, idx) => {
     let total = 0;
@@ -96,40 +122,42 @@ function computeStandings(s) {
         : 0;
       const gameTotal = killPoints + rankPoints;
       total += gameTotal;
-      games.push({
-        kills, rank, hero,
-        killPoints, rankPoints, gameTotal,
-        totalBefore: total - gameTotal
-      });
+      games.push({ kills, rank, hero, killPoints, rankPoints, gameTotal, totalBefore: total - gameTotal });
     }
-    return { id: p.id, avatar: p.avatar || '', total, games, index: idx };
+    return {
+      id: p.id,
+      avatar: p.avatar || '',
+      tier: p.tier || '',
+      damage: p.damage || '',
+      total, games, index: idx
+    };
   });
 
-  // 冠军判定：按局顺序，赛前总分 >= 19 且该局 rank === 1
   let championId = null;
   let championGame = -1;
-  const runningTotals = players.map(() => 0);
+  const running = players.map(() => 0);
 
   for (let g = 0; g < maxGames; g++) {
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      const game = p.games[g];
-      const before = runningTotals[i];
-      if (before >= threshold && game.rank === 1) {
+    players.forEach((p, i) => {
+      if (running[i] >= threshold && p.games[g].rank === 1) {
         if (championId === null || g < championGame) {
           championId = p.id;
           championGame = g;
         }
       }
-    }
-    for (let i = 0; i < players.length; i++) {
-      runningTotals[i] += players[i].games[g].gameTotal;
-    }
+    });
+    players.forEach((p, i) => { running[i] += p.games[g].gameTotal; });
+  }
+
+  const allDone = s.players.every(p =>
+    p.ranks[maxGames - 1] !== null && p.ranks[maxGames - 1] !== undefined
+  );
+  if (championId === null && allDone && players.length > 0) {
+    const best = [...players].sort((a, b) => b.total - a.total)[0];
+    if (best) championId = best.id;
   }
 
   players.forEach(p => { p.isChampion = (p.id === championId); });
-
-  // 排序：冠军优先，然后按总分降序
   players.sort((a, b) => {
     if (a.isChampion && !b.isChampion) return -1;
     if (!a.isChampion && b.isChampion) return 1;
@@ -140,60 +168,7 @@ function computeStandings(s) {
   return players.map(({ index, ...rest }) => rest);
 }
 
-// API: 获取状态（含资源列表）
-app.get('/api/state', (req, res) => {
-  const standings = computeStandings(state);
-  res.json({
-    ...state,
-    standings,
-    assets: {
-      heroes: getAssetFiles('heroes'),
-      avatars: getAssetFiles('avatars')
-    }
-  });
-});
-
-// API: 更新数据
-app.post('/api/update', (req, res) => {
-  const newState = req.body;
-  if (!newState.players || !Array.isArray(newState.players)) {
-    return res.status(400).json({ error: '无效数据' });
-  }
-  if (newState.players.length < 8 || newState.players.length > 12) {
-    return res.status(400).json({ error: '选手数量必须在8-12人之间' });
-  }
-  
-  state = {
-    players: newState.players,
-    currentGame: newState.currentGame ?? state.currentGame,
-    threshold: newState.threshold ?? state.threshold,
-    maxGames: newState.maxGames ?? state.maxGames,
-    visible: newState.visible ?? state.visible,
-    scoreboardCollapsed: newState.scoreboardCollapsed ?? state.scoreboardCollapsed,
-    champion: newState.champion ?? state.champion,
-    cardPlayerId: newState.cardPlayerId !== undefined ? newState.cardPlayerId : state.cardPlayerId
-  };
-
-  // 数据清洗
-  state.players.forEach(p => {
-    p.avatar = p.avatar || '';
-    p.kills = p.kills || [];
-    p.ranks = p.ranks || [];
-    p.heroes = p.heroes || [];
-    while (p.kills.length < state.maxGames) p.kills.push(0);
-    while (p.ranks.length < state.maxGames) p.ranks.push(null);
-    while (p.heroes.length < state.maxGames) p.heroes.push('');
-    p.kills = p.kills.slice(0, state.maxGames);
-    p.ranks = p.ranks.slice(0, state.maxGames);
-    p.heroes = p.heroes.slice(0, state.maxGames);
-  });
-
-  saveData();
-  broadcast();
-  res.json({ ok: true, standings: computeStandings(state) });
-});
-
-// SSE 实时推送
+/* ============ SSE ============ */
 let clients = [];
 function broadcast() {
   const standings = computeStandings(state);
@@ -209,7 +184,7 @@ app.get('/api/events', (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  const client = { id: Date.now(), res };
+  const client = { id: Date.now() + Math.random(), res };
   clients.push(client);
 
   const standings = computeStandings(state);
@@ -220,7 +195,51 @@ app.get('/api/events', (req, res) => {
   });
 });
 
-// API: 重置比赛
+/* ============ 管理员 API ============ */
+app.get('/api/state', (req, res) => {
+  res.json({
+    ...state,
+    standings: computeStandings(state),
+    assets: {
+      heroes: getAssetFiles('heroes'),
+      avatars: getAssetFiles('avatars')
+    }
+  });
+});
+
+app.post('/api/update', (req, res) => {
+  const ns = req.body;
+  if (!ns.players || !Array.isArray(ns.players)) {
+    return res.status(400).json({ error: '无效数据' });
+  }
+  if (ns.players.length < 2 || ns.players.length > MAX_PLAYERS) {
+    return res.status(400).json({ error: `选手数量必须在 2-${MAX_PLAYERS} 之间` });
+  }
+  const merged = ns.players.map((p, i) => {
+    const old = state.players.find(op => op.id === p.id) || state.players[i] || {};
+    return {
+      ...old,
+      ...p,
+      tier:   p.tier   !== undefined ? p.tier   : (old.tier   || ''),
+      damage: p.damage !== undefined ? p.damage : (old.damage || ''),
+      heroes: p.heroes || old.heroes || new Array(state.maxGames).fill('')
+    };
+  });
+  state.players = merged;
+
+  if (ns.currentGame !== undefined) state.currentGame = ns.currentGame;
+  if (ns.threshold !== undefined) state.threshold = ns.threshold;
+  if (ns.maxGames !== undefined) state.maxGames = ns.maxGames;
+  if (ns.visible !== undefined) state.visible = ns.visible;
+  if (ns.scoreboardCollapsed !== undefined) state.scoreboardCollapsed = ns.scoreboardCollapsed;
+  if (ns.cardPlayerId !== undefined) state.cardPlayerId = ns.cardPlayerId;
+
+  normalizeState(state);
+  saveData();
+  broadcast();
+  res.json({ ok: true, standings: computeStandings(state) });
+});
+
 app.post('/api/reset', (req, res) => {
   state = defaultData();
   saveData();
@@ -228,44 +247,115 @@ app.post('/api/reset', (req, res) => {
   res.json({ ok: true });
 });
 
-// API: 添加选手
 app.post('/api/add-player', (req, res) => {
-  if (state.players.length >= 12) {
-    return res.status(400).json({ error: '最多12名选手' });
+  if (state.players.length >= MAX_PLAYERS) {
+    return res.status(400).json({ error: `最多 ${MAX_PLAYERS} 名选手` });
   }
-  state.players.push({
-    id: `选手${state.players.length + 1}`,
-    avatar: '',
-    kills: new Array(state.maxGames).fill(0),
-    ranks: new Array(state.maxGames).fill(null),
-    heroes: new Array(state.maxGames).fill('')
-  });
+  state.players.push(defaultPlayer(state.players.length + 1));
   saveData();
   broadcast();
   res.json({ ok: true, state });
 });
 
-// API: 删除选手
-app.post('/api/remove-player', (req, res) => {
-  const { index } = req.body;
-  if (state.players.length <= 8) {
-    return res.status(400).json({ error: '最少8名选手' });
+/* ============ 切换当前局 ============ */
+app.post('/api/game/current', (req, res) => {
+  const g = parseInt((req.body || {}).game);
+  if (isNaN(g) || g < 0 || g >= state.maxGames) {
+    return res.status(400).json({ error: '无效局数' });
   }
-  if (index >= 0 && index < state.players.length) {
-    state.players.splice(index, 1);
-    saveData();
-    broadcast();
-    res.json({ ok: true, state });
-  } else {
-    res.status(400).json({ error: '索引无效' });
-  }
+  state.currentGame = g;
+  saveData();
+  broadcast();
+  res.json({ ok: true });
 });
 
+/* ============ 展示模式控制 ============ */
+app.post('/api/display/mode', (req, res) => {
+  const { mode, focusPlayerId, carouselRunning } = req.body || {};
+  if (mode && DISPLAY_MODES.includes(mode)) {
+    state.displayMode = mode;
+  }
+  if (focusPlayerId !== undefined) state.focusPlayerId = focusPlayerId;
+  if (typeof carouselRunning === 'boolean') state.carouselRunning = carouselRunning;
+  saveData();
+  broadcast();
+  res.json({ ok: true });
+});
+
+/* ============ 选手 API ============ */
+app.post('/api/player/login', (req, res) => {
+  const input = String((req.body || {}).id || '').trim();
+  if (!input) return res.status(400).json({ error: '请输入选手ID' });
+  const idx = state.players.findIndex(p => p.id === input);
+  if (idx < 0) return res.status(404).json({ error: '未找到该选手，请联系管理员' });
+  res.json({ ok: true, playerId: state.players[idx].id });
+});
+
+app.get('/api/player/state', (req, res) => {
+  const id = String(req.query.id || '').trim();
+  const idx = state.players.findIndex(p => p.id === id);
+  if (idx < 0) return res.status(404).json({ error: '未找到该选手' });
+  const p = state.players[idx];
+
+  res.json({
+    player: {
+      id: p.id,
+      avatar: p.avatar || '',
+      tier: p.tier || '',
+      damage: p.damage || '',
+      heroes: p.heroes,
+      kills: p.kills,
+      ranks: p.ranks
+    },
+    currentGame: state.currentGame,
+    maxGames: state.maxGames,
+    threshold: state.threshold,
+    assets: { heroes: getAssetFiles('heroes') }
+  });
+});
+
+app.post('/api/player/hero', (req, res) => {
+  const { id, game, hero } = req.body || {};
+  const idx = state.players.findIndex(p => p.id === id);
+  if (idx < 0) return res.status(404).json({ error: '未找到该选手' });
+  const g = parseInt(game);
+  if (isNaN(g) || g < 0 || g >= state.maxGames) {
+    return res.status(400).json({ error: '无效局数' });
+  }
+  const p = state.players[idx];
+  const newHero = hero ? String(hero) : '';
+
+  if (newHero) {
+    for (let i = 0; i < state.maxGames; i++) {
+      if (i !== g && p.heroes[i] === newHero) {
+        return res.status(400).json({ error: '该英雄你已使用过，不能重复选择' });
+      }
+    }
+  }
+
+  p.heroes[g] = newHero;
+  saveData();
+  broadcast();
+  res.json({ ok: true });
+});
+
+app.post('/api/player/profile', (req, res) => {
+  const { id, tier, damage } = req.body || {};
+  const idx = state.players.findIndex(p => p.id === id);
+  if (idx < 0) return res.status(404).json({ error: '未找到该选手' });
+  const p = state.players[idx];
+  if (typeof tier === 'string') p.tier = tier;
+  if (damage !== undefined) p.damage = String(damage);
+  saveData();
+  broadcast();
+  res.json({ ok: true });
+});
+
+/* ============ 启动 ============ */
 app.listen(PORT, () => {
   console.log(`✅ 服务已启动: http://localhost:${PORT}`);
-  console.log(`📋 控制台: http://localhost:${PORT}/admin.html`);
-  console.log(`📺 展示页: http://localhost:${PORT}/display.html`);
-  console.log(`🎴 选手卡片: http://localhost:${PORT}/player-card.html`);
-  console.log(`🎭 英雄目录: public/heroes/`);
-  console.log(`📸 头像目录: public/avatars/`);
+  console.log(`📋 控制台:   /admin.html`);
+  console.log(`📺 展示页:   /display.html`);
+  console.log(`🎴 选手卡片: /player-card.html`);
+  console.log(`🎮 选手中心: /player.html`);
 });

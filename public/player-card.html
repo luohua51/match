@@ -151,7 +151,7 @@
     margin-left: 6px;
   }
 
-  /* 英雄展示 —— 位置完全不变 */
+  /* 英雄展示 */
   .hero-wrap {
     position: absolute;
     right: 0px;
@@ -247,7 +247,7 @@
     text-shadow: 0 0 8px rgba(231,76,60,.9);
   }
 
-  /* ✅ 底部独立局数标签 */
+  /* 底部独立局数标签 */
   .bottom-game-tag {
     position: absolute;
     bottom: -18px;
@@ -273,7 +273,6 @@
     <div class="big-rank-num" id="placeBig">#1</div>
   </div>
 
-  <!-- 英雄区（不含标签） -->
   <div class="hero-wrap empty" id="heroWrap"></div>
 
   <div class="top-row">
@@ -312,7 +311,6 @@
     <span class="val" id="currentDetail">0 杀 · 未排名</span>
   </div>
 
-  <!-- ✅ 底部独立局数标签 -->
   <div class="bottom-game-tag" id="bottomGameTag">第1局</div>
 </div>
 
@@ -320,32 +318,28 @@
 const API = '';
 const card = document.getElementById('card');
 
+// 状态跟踪
+let currentRenderedId = null; // 当前实际显示的选手ID
+let switchTimer = null;       // 切换动画的计时器
+const SWITCH_DURATION = 500;  // 与 CSS transition 时长一致
+
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 function stripExt(name) { return String(name).replace(/\.[^/.]+$/, ''); }
 
-function render(data) {
-  const { standings, cardPlayerId, maxGames, threshold, currentGame } = data;
+// ---------- 只更新卡片内容（不动显隐状态） ----------
+function updateCardContent(p, data) {
+  const { maxGames, threshold, currentGame } = data;
 
-  if (!cardPlayerId || !standings || standings.length === 0) {
-    card.classList.remove('show');
-    return;
-  }
-
-  const p = standings.find(x => x.id === cardPlayerId);
-  if (!p) { card.classList.remove('show'); return; }
-
-  card.classList.add('show');
-
-  // ---- 大排名 ----
+  // 大排名
   const place = p.place || 0;
   const placeBig = document.getElementById('placeBig');
   const bigRank = document.getElementById('bigRank');
   placeBig.textContent = '#' + place;
   bigRank.className = 'big-rank' + (place === 1 ? ' p1' : place === 2 ? ' p2' : place === 3 ? ' p3' : '');
 
-  // ---- 头像 ----
+  // 头像
   const avatarWrap = document.getElementById('avatarWrap');
   if (p.avatar) {
     const fallbackChar = escapeHtml(stripExt(p.id)).charAt(0) || '?';
@@ -355,20 +349,20 @@ function render(data) {
     avatarWrap.innerHTML = `<div class="avatar-empty">${fallbackChar}</div>`;
   }
 
-  // ---- 名字 ----
+  // 名字
   document.getElementById('pname').textContent = p.id;
 
-  // ---- 徽章 ----
+  // 徽章
   const mpBadge = document.getElementById('mpBadge');
   const champBadge = document.getElementById('champBadge');
   const isMP = p.total >= (threshold || 19);
   mpBadge.style.display = (isMP && !p.isChampion) ? 'inline-block' : 'none';
   champBadge.style.display = p.isChampion ? 'inline-block' : 'none';
 
-  // ---- 总分 ----
+  // 总分
   document.getElementById('totalNum').textContent = p.total.toFixed(1);
 
-  // ---- 统计：总击杀 & 吃鸡数 ----
+  // 统计
   let totalKills = 0, totalWins = 0;
   for (let g = 0; g < (maxGames || 5); g++) {
     const game = p.games[g];
@@ -380,11 +374,11 @@ function render(data) {
   document.getElementById('totalKills').textContent = totalKills;
   document.getElementById('totalWins').textContent = totalWins;
 
-  // ---- 当前局信息 ----
+  // 当前局
   const cg = currentGame || 0;
   const currentGameData = p.games[cg] || { kills: 0, rank: null, gameTotal: 0, hero: '' };
 
-  // 英雄（不再有局数标签）
+  // 英雄
   const heroWrap = document.getElementById('heroWrap');
   if (currentGameData.hero) {
     heroWrap.className = 'hero-wrap';
@@ -394,7 +388,7 @@ function render(data) {
     heroWrap.innerHTML = '';
   }
 
-  // ✅ 底部独立标签显示第几局
+  // 底部局数
   document.getElementById('bottomGameTag').textContent = `第${cg + 1}局`;
 
   // 当前局得分
@@ -404,11 +398,9 @@ function render(data) {
   const rankVal = currentGameData.rank;
   document.getElementById('currentRank').textContent = rankVal ? '#' + rankVal : '-';
 
-  // 当前局详情
+  // 详情
   const kills = currentGameData.kills || 0;
-  let detailParts = [];
-  detailParts.push(kills + ' 杀');
-  detailParts.push(rankVal ? '排名 #' + rankVal : '未排名');
+  const detailParts = [kills + ' 杀', rankVal ? '排名 #' + rankVal : '未排名'];
   document.getElementById('currentTag').textContent = `第${cg + 1}局 · 进行中`;
 
   // 赛点标记
@@ -421,6 +413,52 @@ function render(data) {
   document.getElementById('currentDetail').innerHTML = detailParts.join(' · ') + mpMark;
 }
 
+// ---------- 主渲染函数 ----------
+function render(data) {
+  const { standings, cardPlayerId } = data;
+
+  // 情况 1：没有选择任何选手 → 直接淡出
+  if (!cardPlayerId || !standings || standings.length === 0) {
+    if (switchTimer) { clearTimeout(switchTimer); switchTimer = null; }
+    currentRenderedId = null;
+    card.classList.remove('show');
+    return;
+  }
+
+  const p = standings.find(x => x.id === cardPlayerId);
+
+  // 情况 2：找不到这位选手 → 直接淡出
+  if (!p) {
+    if (switchTimer) { clearTimeout(switchTimer); switchTimer = null; }
+    currentRenderedId = null;
+    card.classList.remove('show');
+    return;
+  }
+
+  // ---- 更新内容（数据变化时始终用最新数据刷新 DOM） ----
+  updateCardContent(p, data);
+
+  // 情况 3：同一位选手的数据更新 → 只更新内容，确保卡片是显示状态
+  if (currentRenderedId === cardPlayerId) {
+    // 如果正在切换动画中，不要打断动画
+    if (!switchTimer) {
+      card.classList.add('show');
+    }
+    return;
+  }
+
+  // 情况 4：切换到不同选手 → 先淡出，等一会儿，再淡入
+  if (switchTimer) clearTimeout(switchTimer);
+  currentRenderedId = cardPlayerId;
+  card.classList.remove('show'); // 开始淡出
+
+  switchTimer = setTimeout(() => {
+    switchTimer = null;
+    card.classList.add('show'); // 淡入（此时 DOM 已经是最新选手内容）
+  }, SWITCH_DURATION);
+}
+
+// SSE 实时更新
 const evtSource = new EventSource(API + '/api/events');
 evtSource.onmessage = (e) => {
   try { render(JSON.parse(e.data)); } catch (err) { console.error('解析数据失败', err); }

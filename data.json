@@ -1,157 +1,44 @@
 {
   "players": [
     {
-      "id": "小运",
-      "kills": [
-        6,
-        5,
-        2,
-        0,
-        4
-      ],
-      "ranks": [
-        1,
-        3,
-        3,
-        5,
-        2
-      ],
-      "avatar": "小运.jpg",
-      "heroes": [
-        "妖刀姬.png",
-        "",
-        "特木尔.png",
-        "",
-        "张起灵.png"
-      ]
-    },
-    {
-      "id": "鸽子",
-      "kills": [
-        7,
-        0,
-        5,
-        3,
-        2
-      ],
-      "ranks": [
-        2,
-        8,
-        2,
-        2,
-        6
-      ],
+      "id": "选手1",
       "avatar": "",
+      "tier": "",
+      "damage": "",
       "heroes": [
-        "",
+        "魏轻.png",
         "",
         "",
         "",
         ""
-      ]
-    },
-    {
-      "id": "苹果",
+      ],
       "kills": [
-        2,
-        4,
         0,
-        3,
-        1
-      ],
-      "ranks": [
-        3,
-        2,
-        9,
-        3,
-        5
-      ],
-      "avatar": "",
-      "heroes": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ]
-    },
-    {
-      "id": "小憋",
-      "kills": [
-        3,
-        6,
-        4,
+        0,
+        0,
         0,
         0
       ],
       "ranks": [
-        4,
-        1,
-        4,
         null,
-        null
-      ],
-      "avatar": "",
-      "heroes": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ]
-    },
-    {
-      "id": "珍惜录",
-      "kills": [
-        3,
-        0,
-        1,
-        5,
-        5
-      ],
-      "ranks": [
-        5,
-        7,
-        5,
-        1,
-        1
-      ],
-      "avatar": "珍惜录.jpg",
-      "heroes": [
-        "顾清寒.png",
-        "",
-        "",
-        "",
-        "顾清寒.png"
-      ]
-    },
-    {
-      "id": "喜欢听话猫咪",
-      "kills": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "ranks": [
-        6,
         null,
         null,
         null,
         null
-      ],
+      ]
+    },
+    {
+      "id": "选手2",
       "avatar": "",
+      "tier": "",
+      "damage": "",
       "heroes": [
         "",
         "",
         "",
         "",
         ""
-      ]
-    },
-    {
-      "id": "雨眠",
+      ],
       "kills": [
         0,
         0,
@@ -160,102 +47,292 @@
         0
       ],
       "ranks": [
-        7,
-        6,
-        7,
-        7,
-        8
-      ],
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手3",
       "avatar": "",
+      "tier": "",
+      "damage": "",
       "heroes": [
         "",
         "",
         "",
         "",
         ""
-      ]
-    },
-    {
-      "id": "小虎",
-      "kills": [
-        0,
-        3,
-        6,
-        4,
-        2
       ],
-      "ranks": [
-        8,
-        4,
-        1,
-        4,
-        4
-      ],
-      "avatar": "",
-      "heroes": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ]
-    },
-    {
-      "id": "偷吃鱼的猫咪",
-      "kills": [
-        0,
-        1,
-        2,
-        1,
-        1
-      ],
-      "ranks": [
-        9,
-        5,
-        6,
-        6,
-        7
-      ],
-      "avatar": "",
-      "heroes": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ]
-    },
-    {
-      "id": "懦弱刀",
       "kills": [
         0,
         0,
         0,
         0,
-        3
+        0
       ],
       "ranks": [
-        10,
-        9,
-        8,
-        8,
-        3
-      ],
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手4",
       "avatar": "",
+      "tier": "",
+      "damage": "",
       "heroes": [
         "",
         "",
         "",
         "",
         ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手5",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手6",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手7",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手8",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手9",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手10",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手11",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手12",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
       ]
     }
   ],
-  "currentGame": 4,
+  "currentGame": 0,
   "threshold": 19,
   "maxGames": 5,
-  "visible": false,
+  "visible": true,
   "scoreboardCollapsed": false,
   "champion": null,
-  "cardPlayerId": "小运"
+  "cardPlayerId": null,
+  "displayMode": "focus",
+  "focusPlayerId": "选手1",
+  "carouselRunning": false
 }
