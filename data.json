@@ -1,0 +1,338 @@
+{
+  "players": [
+    {
+      "id": "选手1",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手2",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手3",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手4",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手5",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手6",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手7",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手8",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手9",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手10",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手11",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "选手12",
+      "avatar": "",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "currentGame": 0,
+  "threshold": 19,
+  "maxGames": 5,
+  "visible": true,
+  "scoreboardCollapsed": false,
+  "champion": null,
+  "cardPlayerId": null,
+  "displayMode": "hero-wall",
+  "focusPlayerId": null,
+  "carouselRunning": false
+}
