@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>永劫无间 · 赛点积分赛控制台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0c0d11; color: #e8e6e1;
+    font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    padding: 20px; min-height: 100vh;
+  }
+  h1 { font-size: 22px; color: #e6c377; letter-spacing: .08em; margin-bottom: 6px; }
+  .sub { color: #8b8f9a; font-size: 13px; margin-bottom: 20px; }
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;
+    background: rgba(255,255,255,.02); padding: 15px; border-radius: 6px;
+    border: 1px solid rgba(230,195,119,.15);
+  }
+  button {
+    background: rgba(230,195,119,.1); border: 1px solid rgba(230,195,119,.5);
+    color: #e6c377; padding: 8px 16px; border-radius: 4px; cursor: pointer;
+    font-size: 14px; transition: .2s;
+  }
+  button:hover { background: rgba(230,195,119,.25); }
+  button:disabled { opacity: .35; cursor: not-allowed; }
+  button.danger { border-color: #c0392b; color: #e74c3c; }
+  button.danger:hover { background: rgba(192,57,43,.2); }
+  button.active { background: #e6c377; color: #0c0d11; font-weight: 700; }
+  .game-selector { display: flex; gap: 6px; align-items: center; margin-right: 10px; }
+  .game-selector button.active { background: #e6c377; color: #0c0d11; font-weight: 700; }
+
+  .right-controls {
+    display: flex; gap: 18px; align-items: center; margin-left: auto; flex-wrap: wrap;
+  }
+  .control-group {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .control-group span {
+    color: #8b8f9a; font-size: 13px; white-space: nowrap;
+  }
+  .control-group select {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(230,195,119,.4);
+    color: #e6c377; padding: 7px 10px; border-radius: 4px; font-size: 13px;
+    outline: none; min-width: 130px; cursor: pointer;
+  }
+  .control-group select:focus { border-color: #e6c377; }
+  .control-group select:disabled { opacity: .4; cursor: not-allowed; }
+  select option { color: #000 !important; background-color: #fff !important; }
+
+  .divider { width: 1px; height: 24px; background: rgba(255,255,255,.1); }
+
+  .table-wrap {
+    overflow-x: auto; border: 1px solid rgba(230,195,119,.25); border-radius: 6px;
+    background: rgba(255,255,255,.02); margin-top: 10px;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 1180px; }
+  th, td { padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: center; font-size: 13px; }
+  th { background: rgba(230,195,119,.08); color: #e6c377; font-weight: 500; white-space: nowrap; }
+  td { color: #d5d3ce; }
+  input[type="text"], input[type="number"] {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15);
+    color: #e8e6e1; padding: 5px 6px; border-radius: 3px; width: 100%; font-size: 13px; outline: none;
+  }
+  input:focus { border-color: #e6c377; }
+
+  .avatar-preview {
+    width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+    background: rgba(255,255,255,.05); display: block; margin: 0 auto;
+    border: 1px solid rgba(230,195,119,.3);
+  }
+  .hero-preview {
+    width: 36px; height: 36px; object-fit: contain;
+    display: block; margin: 0 auto;
+  }
+  .hero-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .hero-cell .hname { font-size: 11px; color: #8b8f9a; }
+  .hero-cell .hname.empty { color: #555; font-style: italic; }
+
+  .tier-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 700;
+    background: rgba(230,195,119,.14); color: #e6c377;
+    border: 1px solid rgba(230,195,119,.35);
+  }
+  .tier-badge.empty { background: transparent; color: #555; border-color: #333; font-weight: 400; }
+  .total-cell { color: #e6c377; font-weight: 700; font-size: 15px; }
+  .match-point { color: #e74c3c; font-weight: 700; }
+  .remove-btn { background: transparent; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+  .remove-btn:hover { color: #e74c3c; }
+
+  .footer { margin-top: 16px; color: #555; font-size: 12px; line-height: 1.8; }
+  .footer code { color: #e6c377; }
+</style>
+</head>
+<body>
+  <h1>永劫无间 · 赛点积分赛控制台</h1>
+  <div class="sub">击杀分 1.5 / 个 · 排名分 8/6/5/4/3/2/1 · 赛点 19 分 · 五局制</div>
+
+  <div class="toolbar">
+    <div class="game-selector">
+      <span style="color:#8b8f9a; font-size:14px; margin-right:6px;">当前局：</span>
+      <button id="gameBtn0" class="active" onclick="switchGame(0)">第1局</button>
+      <button id="gameBtn1" onclick="switchGame(1)">第2局</button>
+      <button id="gameBtn2" onclick="switchGame(2)">第3局</button>
+      <button id="gameBtn3" onclick="switchGame(3)">第4局</button>
+      <button id="gameBtn4" onclick="switchGame(4)">第5局</button>
+    </div>
+    <button id="addPlayerBtn">＋ 添加选手</button>
+    <button id="reloadAssetsBtn">🔄 刷新资源</button>
+    <button id="resetBtn" class="danger">⟲ 重置比赛</button>
+
+    <div class="right-controls">
+      <div class="control-group">
+        <span>📊 展示页：</span>
+        <select id="modeSelect">
+          <option value="hero-wall">英雄墙</option>
+          <option value="focus">聚焦某位</option>
+          <option value="carousel">轮播</option>
+          <option value="scoreboard">积分榜</option>
+          <option value="hidden">🚫 不显示</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span>🎯 聚焦：</span>
+        <select id="focusSelect">
+          <option value="">选择选手…</option>
+        </select>
+      </div>
+      <button id="carouselBtn">▶ 开始轮播</button>
+      <div class="divider"></div>
+      <div class="control-group">
+        <span>🎴 导播卡：</span>
+        <select id="cardSelect">
+          <option value="">不显示</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:140px;">选手ID</th>
+          <th style="width:64px;">头像</th>
+          <th style="width:80px;">段位</th>
+          <th style="width:80px;">场伤</th>
+          <th style="width:90px;">本局英雄</th>
+          <th style="width:80px;">击杀数</th>
+          <th style="width:80px;">排名</th>
+          <th style="width:90px;">本局得分</th>
+          <th style="width:90px;">总积分</th>
+          <th style="width:70px;">赛点</th>
+          <th style="width:50px;"></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    💡 英雄图片放 <code>public/heroes/</code> · 头像图片放 <code>public/avatars/</code><br>
+    段位 / 场伤 由选手自己填（此处只读展示） · 本局英雄由选手自己选 · 修改自动保存并实时同步
+  </div>
+
+<script>
+const API = '';
+let state = null;
+let currentGame = 0;
+let heroOptions = [];
+let avatarOptions = [];
+
+async function loadState() {
+  const res = await fetch(API + '/api/state');
+  state = await res.json();
+  if (state.assets) {
+    heroOptions = state.assets.heroes || [];
+    avatarOptions = state.assets.avatars || [];
+  }
+  if (typeof state.currentGame === 'number') {
+    currentGame = state.currentGame;
+  }
+  render();
+  document.querySelectorAll('.game-selector button').forEach((btn, i) => {
+    btn.classList.toggle('active', i === currentGame);
+  });
+}
+
+async function reloadAssets() {
+  const res = await fetch(API + '/api/state');
+  const data = await res.json();
+  heroOptions = data.assets?.heroes || [];
+  avatarOptions = data.assets?.avatars || [];
+  state.assets = data.assets;
+  render();
+  alert(`资源已刷新\n英雄：${heroOptions.length} 个\n头像：${avatarOptions.length} 个`);
+}
+
+function stripExt(name) { return String(name).replace(/\.[^/.]+$/, ''); }
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+function calcGameScore(kills, rank) {
+  const kp = (kills || 0) * 1.5;
+  const rp = rank
+    ? rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 5
+    : rank === 4 ? 4 : rank === 5 ? 3 : rank === 6 ? 2 : rank === 7 ? 1 : 0
+    : 0;
+  return kp + rp;
+}
+function calcTotal(p) {
+  let total = 0;
+  for (let g = 0; g < state.maxGames; g++) {
+    total += calcGameScore(p.kills[g], p.ranks[g]);
+  }
+  return total;
+}
+
+async function switchGame(g) {
+  currentGame = g;
+  document.querySelectorAll('.game-selector button').forEach((btn, i) => {
+    btn.classList.toggle('active', i === g);
+  });
+  render();
+  try {
+    await fetch(API + '/api/game/current', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: g })
+    });
+  } catch (e) {
+    console.error('切换局数失败', e);
+  }
+}
+
+function render() {
+  const tbody = document.getElementById('tableBody');
+  let bodyHtml = '';
+
+  state.players.forEach((p, idx) => {
+    const kills = p.kills[currentGame] || 0;
+    const rank = p.ranks[currentGame];
+    const hero = (p.heroes && p.heroes[currentGame]) || '';
+    const gameScore = calcGameScore(kills, rank);
+    const total = calcTotal(p);
+    const isMatchPoint = total >= state.threshold;
+
+    let avatarOpts = '<option value="">-</option>';
+    avatarOptions.forEach(a => {
+      avatarOpts += `<option value="${escapeHtml(a)}" ${p.avatar === a ? 'selected' : ''}>${escapeHtml(stripExt(a))}</option>`;
+    });
+
+    const heroHtml = hero
+      ? `<div class="hero-cell">
+           <img class="hero-preview" src="/heroes/${encodeURIComponent(hero)}" onerror="this.style.visibility='hidden'">
+           <div class="hname">${escapeHtml(stripExt(hero))}</div>
+         </div>`
+      : `<div class="hero-cell">
+           <div style="width:36px;height:36px;"></div>
+           <div class="hname empty">未选择</div>
+         </div>`;
+
+    const tierHtml = p.tier
+      ? `<span class="tier-badge">${escapeHtml(p.tier)}</span>`
+      : `<span class="tier-badge empty">未填</span>`;
+    const dmgHtml = p.damage !== '' && p.damage !== undefined && p.damage !== null
+      ? escapeHtml(String(p.damage))
+      : `<span style="color:#555">—</span>`;
+
+    bodyHtml += `<tr data-index="${idx}">`;
+    bodyHtml += `<td><input type="text" value="${escapeHtml(p.id)}" data-field="id"></td>`;
+    bodyHtml += `<td>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+        ${p.avatar ? `<img class="avatar-preview" src="/avatars/${encodeURIComponent(p.avatar)}" onerror="this.style.visibility='hidden'">` : '<div class="avatar-preview"></div>'}
+        <select data-field="avatar" style="font-size:11px;">${avatarOpts}</select>
+      </div>
+    </td>`;
+    bodyHtml += `<td class="tier-cell">${tierHtml}</td>`;
+    bodyHtml += `<td class="dmg-cell">${dmgHtml}</td>`;
+    bodyHtml += `<td class="hero-cell-wrap">${heroHtml}</td>`;
+    bodyHtml += `<td><input type="number" min="0" value="${kills}" data-field="kills" style="width:60px"></td>`;
+    bodyHtml += `<td><select data-field="rank" style="width:70px">
+      <option value="">-</option>`;
+    for (let r = 1; r <= 12; r++) {
+      bodyHtml += `<option value="${r}" ${rank === r ? 'selected' : ''}>${r}</option>`;
+    }
+    bodyHtml += `</select></td>`;
+    bodyHtml += `<td style="color:#e6c377; font-weight:700;">${gameScore.toFixed(1)}</td>`;
+    bodyHtml += `<td class="total-cell">${total.toFixed(1)}</td>`;
+    bodyHtml += `<td class="${isMatchPoint ? 'match-point' : ''}">${isMatchPoint ? '赛点' : '-'}</td>`;
+    bodyHtml += `<td><button class="remove-btn" data-remove="${idx}" title="删除">✕</button></td>`;
+    bodyHtml += `</tr>`;
+  });
+  tbody.innerHTML = bodyHtml;
+
+  tbody.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', onFieldChange);
+  });
+  tbody.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', onRemovePlayer);
+  });
+
+  renderDisplayControls();
+}
+
+function renderDisplayControls() {
+  const modeSel = document.getElementById('modeSelect');
+  modeSel.value = state.displayMode || 'hero-wall';
+
+  const focusSel = document.getElementById('focusSelect');
+  const prevFocus = state.focusPlayerId || '';
+  focusSel.innerHTML = '<option value="">选择选手…</option>';
+  state.players.forEach(p => {
+    focusSel.innerHTML += `<option value="${escapeHtml(p.id)}" ${prevFocus === p.id ? 'selected' : ''}>${escapeHtml(p.id)}</option>`;
+  });
+  focusSel.disabled = (state.displayMode !== 'focus');
+
+  const carBtn = document.getElementById('carouselBtn');
+  if (state.carouselRunning) {
+    carBtn.textContent = '⏹ 停止轮播';
+    carBtn.classList.add('active');
+  } else {
+    carBtn.textContent = '▶ 开始轮播';
+    carBtn.classList.remove('active');
+  }
+  carBtn.disabled = (state.displayMode !== 'carousel');
+
+  const cardSel = document.getElementById('cardSelect');
+  const currentCardId = state.cardPlayerId || '';
+  let opts = '<option value="">不显示</option>';
+  state.players.forEach(p => {
+    opts += `<option value="${escapeHtml(p.id)}" ${currentCardId === p.id ? 'selected' : ''}>${escapeHtml(p.id)}</option>`;
+  });
+  cardSel.innerHTML = opts;
+}
+
+function onFieldChange(e) {
+  const el = e.target;
+  const tr = el.closest('tr');
+  const idx = parseInt(tr.dataset.index);
+  const field = el.dataset.field;
+  const player = state.players[idx];
+
+  if (field === 'id') {
+    const oldId = player.id;
+    player.id = el.value.trim() || `选手${idx + 1}`;
+    if (state.cardPlayerId === oldId) state.cardPlayerId = player.id;
+    if (state.focusPlayerId === oldId) state.focusPlayerId = player.id;
+  } else if (field === 'avatar') {
+    player.avatar = el.value || '';
+  } else if (field === 'kills') {
+    player.kills[currentGame] = Math.max(0, parseInt(el.value) || 0);
+  } else if (field === 'rank') {
+    player.ranks[currentGame] = el.value ? parseInt(el.value) : null;
+  }
+
+  saveState();
+  render();
+}
+
+function onRemovePlayer(e) {
+  const idx = parseInt(e.target.dataset.remove);
+  if (state.players.length <= 2) { alert('最少需要 2 名选手'); return; }
+  if (!confirm(`确定删除选手「${state.players[idx].id}」？`)) return;
+  state.players.splice(idx, 1);
+  render();
+  saveState();
+}
+
+let saveTimer = null;
+function saveState() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const payload = {
+      players: state.players,
+      currentGame: currentGame,
+      threshold: state.threshold,
+      maxGames: state.maxGames,
+      visible: state.visible,
+      scoreboardCollapsed: state.scoreboardCollapsed,
+      champion: state.champion,
+      cardPlayerId: state.cardPlayerId
+    };
+    await fetch(API + '/api/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  }, 200);
+}
+
+async function pushDisplayMode(extra) {
+  await fetch(API + '/api/display/mode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(extra)
+  });
+}
+
+document.getElementById('addPlayerBtn').onclick = async () => {
+  if (state.players.length >= 16) { alert('最多 16 名选手'); return; }
+  const res = await fetch(API + '/api/add-player', { method: 'POST' });
+  if (res.ok) { const data = await res.json(); state = Object.assign(state, data.state); render(); }
+};
+
+document.getElementById('reloadAssetsBtn').onclick = reloadAssets;
+
+document.getElementById('resetBtn').onclick = async () => {
+  if (!confirm('确定重置所有比赛数据？此操作不可恢复。')) return;
+  await fetch(API + '/api/reset', { method: 'POST' });
+  await loadState();
+  switchGame(0);
+};
+
+document.getElementById('modeSelect').onchange = async (e) => {
+  await pushDisplayMode({ mode: e.target.value });
+};
+
+document.getElementById('focusSelect').onchange = async (e) => {
+  await pushDisplayMode({ mode: 'focus', focusPlayerId: e.target.value || null });
+};
+
+document.getElementById('carouselBtn').onclick = async () => {
+  await pushDisplayMode({ carouselRunning: !state.carouselRunning });
+};
+
+document.getElementById('cardSelect').onchange = (e) => {
+  state.cardPlayerId = e.target.value || null;
+  saveState();
+};
+
+const evtSource = new EventSource(API + '/api/events');
+evtSource.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    if (!state) return;
+
+    state.displayMode = data.displayMode;
+    state.focusPlayerId = data.focusPlayerId;
+    state.carouselRunning = data.carouselRunning;
+
+    if (typeof data.currentGame === 'number' && data.currentGame !== currentGame) {
+      currentGame = data.currentGame;
+      document.querySelectorAll('.game-selector button').forEach((btn, i) => {
+        btn.classList.toggle('active', i === currentGame);
+      });
+    }
+
+    const needRefresh = data.players.some((p, i) => {
+      const cur = state.players[i];
+      if (!cur) return true;
+      return cur.tier !== p.tier || cur.damage !== p.damage ||
+             JSON.stringify(cur.heroes) !== JSON.stringify(p.heroes);
+    });
+    if (needRefresh) {
+      data.players.forEach((p, i) => {
+        if (state.players[i]) {
+          state.players[i].tier = p.tier;
+          state.players[i].damage = p.damage;
+          state.players[i].heroes = p.heroes;
+        }
+      });
+      const tbody = document.getElementById('tableBody');
+      const rows = tbody.querySelectorAll('tr');
+      state.players.forEach((p, idx) => {
+        const tr = rows[idx];
+        if (!tr) return;
+        const tierCell = tr.querySelector('.tier-cell');
+        if (tierCell) {
+          tierCell.innerHTML = p.tier
+            ? `<span class="tier-badge">${escapeHtml(p.tier)}</span>`
+            : `<span class="tier-badge empty">未填</span>`;
+        }
+        const dmgCell = tr.querySelector('.dmg-cell');
+        if (dmgCell) {
+          dmgCell.innerHTML = (p.damage !== '' && p.damage != null)
+            ? escapeHtml(String(p.damage))
+            : `<span style="color:#555">—</span>`;
+        }
+        const heroCell = tr.querySelector('.hero-cell-wrap');
+        if (heroCell) {
+          const hero = (p.heroes && p.heroes[currentGame]) || '';
+          heroCell.innerHTML = hero
+            ? `<div class="hero-cell"><img class="hero-preview" src="/heroes/${encodeURIComponent(hero)}" onerror="this.style.visibility='hidden'"><div class="hname">${escapeHtml(stripExt(hero))}</div></div>`
+            : `<div class="hero-cell"><div style="width:36px;height:36px;"></div><div class="hname empty">未选择</div></div>`;
+        }
+      });
+    }
+
+    renderDisplayControls();
+  } catch (err) { /* 忽略 */ }
+};
+
+loadState();
+</script>
+</body>
+</html>

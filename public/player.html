@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>永劫无间 · 选手中心</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:#0c0d11;color:#e8e6e1;
+    font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    padding:14px;min-height:100vh;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding-bottom:40px}
+
+  /* ===== 登录 ===== */
+  .login{max-width:340px;margin:20vh auto 0;background:rgba(255,255,255,.03);
+         border:1px solid rgba(230,195,119,.3);border-radius:14px;padding:30px 22px;
+         box-shadow:0 0 50px rgba(230,195,119,.1)}
+  .login h1{font-size:18px;color:#e6c377;letter-spacing:.1em;text-align:center;margin-bottom:6px}
+  .login p{font-size:12px;color:#8b8f9a;text-align:center;margin-bottom:22px}
+  .login input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);
+               color:#e8e6e1;padding:13px;border-radius:8px;font-size:16px;outline:none;margin-bottom:14px}
+  .login input:focus{border-color:#e6c377}
+  .login button{width:100%;background:rgba(230,195,119,.12);border:1px solid rgba(230,195,119,.6);
+                color:#e6c377;padding:13px;border-radius:8px;font-size:15px;font-weight:700;
+                letter-spacing:.1em;cursor:pointer;transition:.2s}
+  .login button:active{background:rgba(230,195,119,.3)}
+  .err{color:#e74c3c;font-size:13px;text-align:center;min-height:18px;margin-top:10px}
+
+  /* ===== 顶栏 ===== */
+  .topbar{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;
+          margin-bottom:14px;background:linear-gradient(135deg,rgba(230,195,119,.14),rgba(230,195,119,.03));
+          border:1px solid rgba(230,195,119,.3);position:relative}
+  .avatar{width:52px;height:52px;border-radius:50%;background:rgba(230,195,119,.15);
+          border:1.5px solid rgba(230,195,119,.6);display:flex;align-items:center;
+          justify-content:center;font-weight:900;color:#e6c377;font-size:22px;overflow:hidden;flex-shrink:0}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .info{flex:1;min-width:0}
+  .pname{font-size:19px;font-weight:800;color:#fff}
+  .pmeta{font-size:12px;color:#8b8f9a;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pmeta .tier{color:#e6c377;font-weight:700}
+  .pmeta .sep{color:#444}
+  .edit-btn{position:absolute;top:12px;right:12px;background:transparent;
+            border:1px solid rgba(230,195,119,.4);color:#e6c377;font-size:11px;
+            padding:4px 10px;border-radius:20px;cursor:pointer;transition:.2s}
+  .edit-btn:active{background:rgba(230,195,119,.2)}
+  .edit-btn.highlight{background:rgba(230,195,119,.2);border-color:#e6c377;
+                      box-shadow:0 0 12px rgba(230,195,119,.4);animation:softGlow 1.6s infinite alternate}
+  @keyframes softGlow{from{box-shadow:0 0 8px rgba(230,195,119,.3)}to{box-shadow:0 0 18px rgba(230,195,119,.6)}}
+
+  /* ===== 区块 ===== */
+  .section{background:rgba(255,255,255,.02);border:1px solid rgba(230,195,119,.18);
+           border-radius:12px;padding:14px;margin-bottom:14px}
+  .section-title{font-size:13px;color:#e6c377;font-weight:700;letter-spacing:.1em;
+                 margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .section-title .g{margin-left:auto;font-size:11px;color:#8b8f9a;font-weight:400}
+
+  /* ===== 英雄格 ===== */
+  .hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media (min-width:768px){
+    body{padding:24px}
+    .wrap{max-width:1100px;padding-bottom:60px}
+    .hero-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+  }
+  @media (min-width:1280px){
+    .wrap{max-width:1440px}
+    .hero-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+    .section{padding:20px}
+    .topbar{padding:18px 22px}
+  }
+
+  .hero-cell{position:relative;aspect-ratio:1/1;border:2px solid rgba(255,255,255,.08);
+             border-radius:10px;background:rgba(255,255,255,.02);cursor:pointer;
+             display:flex;align-items:center;justify-content:center;overflow:hidden;
+             transition:.15s;padding:4px}
+  .hero-cell:active{transform:scale(.95)}
+  .hero-cell img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+  .hero-cell .nm{position:absolute;bottom:0;left:0;right:0;font-size:10px;text-align:center;
+                 color:#c9c7c2;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);
+                 padding:8px 2px 3px;pointer-events:none;
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hero-cell.selected{border-color:#e6c377;background:rgba(230,195,119,.16);
+                      box-shadow:0 0 14px rgba(230,195,119,.5)}
+  .hero-cell.selected::after{content:"✓";position:absolute;top:4px;right:6px;
+                             color:#0c0d11;background:#e6c377;font-size:11px;font-weight:900;
+                             width:18px;height:18px;border-radius:50%;display:flex;
+                             align-items:center;justify-content:center;z-index:2}
+  .hero-cell.used{opacity:.22;filter:grayscale(1);cursor:not-allowed}
+  .hero-cell.used::before{content:"已用";position:absolute;top:50%;left:50%;
+                          transform:translate(-50%,-50%) rotate(-15deg);
+                          color:#e74c3c;font-size:11px;font-weight:900;
+                          letter-spacing:2px;z-index:3;text-shadow:0 0 6px rgba(0,0,0,.9)}
+  .empty-hint{grid-column:1/-1;text-align:center;color:#666;padding:20px;font-size:13px}
+
+  /* ===== 历史 ===== */
+  .history-item{display:flex;align-items:center;gap:10px;padding:9px 0;
+                border-bottom:1px solid rgba(255,255,255,.05)}
+  .history-item:last-child{border-bottom:none}
+  .h-game{font-size:12px;color:#8b8f9a;width:52px;flex-shrink:0}
+  .h-game.now{color:#e6c377;font-weight:700}
+  .h-hero{width:32px;height:32px;flex-shrink:0;border-radius:6px;
+          background:rgba(255,255,255,.04);display:flex;align-items:center;
+          justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .h-hero img{width:100%;height:100%;object-fit:contain}
+  .h-hero .q{color:#444;font-size:16px;font-weight:900}
+  .h-name{flex:1;font-size:13px;color:#d5d3ce;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .h-name.dim{color:#555}
+  .h-stat{font-size:12px;color:#8b8f9a;text-align:right;white-space:nowrap}
+  .h-stat .kill{color:#ccc}
+  .h-stat .rank{color:#ccc;margin-left:8px}
+  .h-stat .score{color:#e6c377;font-weight:700;margin-left:8px;font-size:13px}
+  .h-stat .score.zero{color:#555}
+
+  /* ===== 弹层 ===== */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;
+            display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:#15161c;border:1px solid rgba(230,195,119,.4);border-radius:14px;
+         padding:22px;width:100%;max-width:340px}
+  .modal h3{font-size:15px;color:#e6c377;margin-bottom:4px;letter-spacing:.08em}
+  .modal .modal-sub{font-size:12px;color:#8b8f9a;margin-bottom:16px}
+  .modal label{display:block;font-size:12px;color:#8b8f9a;margin-bottom:6px;margin-top:12px}
+  .modal input,.modal select{width:100%;background:rgba(255,255,255,.06);
+                             border:1px solid rgba(255,255,255,.15);color:#e8e6e1;
+                             padding:10px 12px;border-radius:6px;font-size:15px;outline:none}
+  .modal input:focus,.modal select:focus{border-color:#e6c377}
+  .modal select option{color:#000;background:#fff}
+  .modal-btns{display:flex;gap:10px;margin-top:20px}
+  .modal-btns button{flex:1;padding:11px;border-radius:8px;font-size:14px;
+                     font-weight:700;cursor:pointer;letter-spacing:.06em}
+  .m-cancel{background:transparent;border:1px solid rgba(255,255,255,.15);color:#8b8f9a}
+  .m-ok{background:rgba(230,195,119,.15);border:1px solid rgba(230,195,119,.6);color:#e6c377}
+
+  /* ===== Toast ===== */
+  .toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%) translateY(20px);
+         background:rgba(20,20,24,.96);border:1px solid rgba(230,195,119,.5);color:#e6c377;
+         padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;
+         transition:.3s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;
+         overflow:hidden;text-overflow:ellipsis}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.error{border-color:#e74c3c;color:#ff8a80}
+</style>
+</head>
+<body>
+
+<!-- ========== 登录 ========== -->
+<div id="loginView">
+  <div class="login">
+    <h1>🎮 选手登录</h1>
+    <p>请输入你的选手 ID</p>
+    <input id="idInput" type="text" placeholder="例如：选手1" autocomplete="off">
+    <button id="loginBtn">进 入</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ========== 主界面 ========== -->
+<div id="mainView" class="wrap" style="display:none">
+
+  <div class="topbar">
+    <div class="avatar" id="avatarBox">?</div>
+    <div class="info">
+      <div class="pname" id="pName">—</div>
+      <div class="pmeta" id="pMeta">—</div>
+    </div>
+    <button class="edit-btn" id="editBtn">编辑资料</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      ⚔ 选择英雄
+      <span class="g" id="gameLabel">第1局</span>
+    </div>
+    <div class="hero-grid" id="heroGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📊 我的战绩</div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- ========== 资料编辑弹层 ========== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">完善资料</h3>
+    <div class="modal-sub" id="modalSub">段位和场伤只需要填写一次</div>
+    <label>段位</label>
+    <select id="tierSelect">
+      <option value="">未填写</option>
+    </select>
+    <label>场伤</label>
+    <input id="damageInput" type="number" min="0" placeholder="例如：12000">
+    <div class="modal-btns">
+      <button class="m-cancel" id="modalCancel">稍后</button>
+      <button class="m-ok" id="modalOk">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+const LS_KEY = 'naraka_player_id';
+const TIERS = ['青铜','白银','黄金','铂金','陨星','蚀月','坠日','修罗','龙王','梵天','泰斗'];
+
+const $ = id => document.getElementById(id);
+let playerId = null;
+let state = null;
+let meta = null;
+let heroList = [];
+let profileCompleted = false;   // 资料是否已完善（用于首次弹层）
+let modalShownThisSession = false;
+
+/* ---------- 工具 ---------- */
+const stripExt = n => String(n).replace(/\.[^/.]+$/, '');
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function calcGameScore(kills, rank) {
+  const kp = (kills || 0) * 1.5;
+  const rp = rank
+    ? rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 5
+    : rank === 4 ? 4 : rank === 5 ? 3 : rank === 6 ? 2 : rank === 7 ? 1 : 0
+    : 0;
+  return kp + rp;
+}
+let toastTimer;
+function toast(msg, isError) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---------- 登录 ---------- */
+async function doLogin() {
+  const id = $('idInput').value.trim();
+  $('loginErr').textContent = '';
+  if (!id) { $('loginErr').textContent = '请输入选手 ID'; return; }
+  try {
+    const res = await fetch(API + '/api/player/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (!res.ok) { $('loginErr').textContent = data.error || '登录失败'; return; }
+    playerId = data.playerId;
+    localStorage.setItem(LS_KEY, playerId);
+    await loadPlayerState(true);
+  } catch (e) {
+    $('loginErr').textContent = '网络错误';
+  }
+}
+
+async function loadPlayerState(firstTime) {
+  if (!playerId) return;
+  try {
+    const res = await fetch(API + '/api/player/state?id=' + encodeURIComponent(playerId));
+    if (!res.ok) {
+      localStorage.removeItem(LS_KEY);
+      playerId = null;
+      showLogin();
+      return;
+    }
+    const data = await res.json();
+    state = data.player;
+    meta = {
+      currentGame: data.currentGame,
+      maxGames: data.maxGames,
+      threshold: data.threshold
+    };
+    heroList = data.assets.heroes || [];
+
+    profileCompleted = !!(state.tier || state.damage !== '' && state.damage != null);
+
+    showMain();
+    renderAll();
+
+    // 首次登录且资料未完善 → 自动弹出
+    if (firstTime && !profileCompleted && !modalShownThisSession) {
+      modalShownThisSession = true;
+      setTimeout(() => {
+        $('modalTitle').textContent = '完善资料';
+        $('modalSub').textContent = '段位和场伤只需要填写一次';
+        openModal(true);
+      }, 300);
+    }
+  } catch (e) { /* 静默 */ }
+}
+
+/* ---------- 视图切换 ---------- */
+function showLogin() {
+  $('loginView').style.display = '';
+  $('mainView').style.display = 'none';
+}
+function showMain() {
+  $('loginView').style.display = 'none';
+  $('mainView').style.display = '';
+}
+
+/* ---------- 渲染 ---------- */
+function renderAll() {
+  renderHeader();
+  renderHeroGrid();
+  renderHistory();
+}
+
+function renderHeader() {
+  const p = state;
+  const initial = escapeHtml(stripExt(p.id)).charAt(0) || '?';
+  $('avatarBox').innerHTML = p.avatar
+    ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" onerror="this.parentNode.textContent='${initial}'">`
+    : initial;
+  $('pName').textContent = p.id;
+
+  const hasTier = !!p.tier;
+  const hasDmg = p.damage !== '' && p.damage !== null && p.damage !== undefined;
+
+  if (hasTier || hasDmg) {
+    const parts = [];
+    if (hasTier) parts.push(`<span class="tier">${escapeHtml(p.tier)}</span>`);
+    if (hasDmg) parts.push(`<span>场伤 ${escapeHtml(String(p.damage))}</span>`);
+    $('pMeta').innerHTML = parts.join('<span class="sep">·</span>');
+  } else {
+    $('pMeta').innerHTML = '<span style="color:#8b8f9a;cursor:pointer" id="metaHint">点击右侧按钮完善资料 →</span>';
+    const hint = $('metaHint');
+    if (hint) hint.onclick = () => openModal(false);
+  }
+
+  // 未完善资料 → 编辑按钮高亮提醒
+  const btn = $('editBtn');
+  if (!hasTier && !hasDmg) {
+    btn.classList.add('highlight');
+  } else {
+    btn.classList.remove('highlight');
+  }
+}
+
+function renderHeroGrid() {
+  const g = meta.currentGame;
+  $('gameLabel').textContent = `第${g + 1}局`;
+
+  if (!heroList.length) {
+    $('heroGrid').innerHTML = '<div class="empty-hint">英雄库为空，请联系管理员</div>';
+    return;
+  }
+
+  const currentHero = state.heroes[g] || '';
+  const usedElsewhere = new Set();
+  for (let i = 0; i < meta.maxGames; i++) {
+    if (i !== g && state.heroes[i]) usedElsewhere.add(state.heroes[i]);
+  }
+
+  let html = '';
+  heroList.forEach(h => {
+    const isUsed = usedElsewhere.has(h);
+    const isSel = h === currentHero;
+    const safe = escapeHtml(h);
+    let cls = 'hero-cell';
+    if (isUsed) cls += ' used';
+    else if (isSel) cls += ' selected';
+    html += `<div class="${cls}" data-hero="${safe}">
+      <img src="/heroes/${encodeURIComponent(h)}" onerror="this.style.visibility='hidden'">
+      <div class="nm">${escapeHtml(stripExt(h))}</div>
+    </div>`;
+  });
+  $('heroGrid').innerHTML = html;
+
+  $('heroGrid').querySelectorAll('.hero-cell').forEach(el => {
+    el.addEventListener('click', onHeroClick);
+  });
+}
+
+async function onHeroClick(e) {
+  const cell = e.currentTarget;
+  if (cell.classList.contains('used')) {
+    toast('该英雄你在其他局已经用过了', true);
+    return;
+  }
+  const hero = cell.dataset.hero;
+  const g = meta.currentGame;
+  const current = state.heroes[g] || '';
+  const newHero = (current === hero) ? '' : hero;
+
+  // 乐观更新
+  const oldHero = current;
+  state.heroes[g] = newHero;
+  renderHeroGrid();
+  renderHistory();
+
+  try {
+    const res = await fetch(API + '/api/player/hero', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: playerId, game: g, hero: newHero })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      state.heroes[g] = oldHero;
+      renderHeroGrid();
+      renderHistory();
+      toast(data.error || '提交失败', true);
+      return;
+    }
+    if (newHero) toast('已选择 ' + stripExt(newHero));
+    else toast('已取消选择');
+  } catch (err) {
+    state.heroes[g] = oldHero;
+    renderHeroGrid();
+    renderHistory();
+    toast('网络错误', true);
+  }
+}
+
+function renderHistory() {
+  let html = '';
+  for (let g = 0; g < meta.maxGames; g++) {
+    const hero = state.heroes[g] || '';
+    const kills = state.kills[g] || 0;
+    const rank = state.ranks[g];
+    const score = calcGameScore(kills, rank);
+    const isNow = g === meta.currentGame;
+
+    html += '<div class="history-item">';
+    html += `<div class="h-game${isNow ? ' now' : ''}">第${g + 1}局</div>`;
+
+    if (hero) {
+      html += `<div class="h-hero"><img src="/heroes/${encodeURIComponent(hero)}" onerror="this.parentNode.innerHTML='<span class=q>?</span>'"></div>`;
+      html += `<div class="h-name">${escapeHtml(stripExt(hero))}</div>`;
+    } else {
+      html += `<div class="h-hero"><span class="q">?</span></div>`;
+      html += `<div class="h-name dim">未选择</div>`;
+    }
+
+    html += `<div class="h-stat">`;
+    html += `<span class="kill">${kills}杀</span>`;
+    html += `<span class="rank">${rank ? '#' + rank : '—'}</span>`;
+    html += `<span class="score${score > 0 ? '' : ' zero'}">${score > 0 ? '+' + score.toFixed(1) : '0.0'}</span>`;
+    html += `</div></div>`;
+  }
+  $('historyList').innerHTML = html;
+}
+
+/* ---------- 资料编辑 ---------- */
+function openModal(isFirst) {
+  const sel = $('tierSelect');
+  sel.innerHTML = '<option value="">未填写</option>';
+  TIERS.forEach(t => {
+    sel.innerHTML += `<option value="${t}" ${state.tier === t ? 'selected' : ''}>${t}</option>`;
+  });
+  $('damageInput').value = state.damage || '';
+  $('modalBg').classList.add('show');
+  $('modalCancel').textContent = isFirst ? '稍后' : '取消';
+}
+function closeModal() {
+  $('modalBg').classList.remove('show');
+}
+async function saveProfile() {
+  const tier = $('tierSelect').value;
+  const damage = $('damageInput').value.trim();
+
+  if (!tier && !damage) {
+    toast('请至少填写一项', true);
+    return;
+  }
+
+  try {
+    const res = await fetch(API + '/api/player/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: playerId, tier, damage })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || '保存失败', true); return; }
+    state.tier = tier;
+    state.damage = damage;
+    profileCompleted = !!(tier || damage);
+    renderHeader();
+    closeModal();
+    toast('资料已保存，之后无需再填');
+  } catch (e) {
+    toast('网络错误', true);
+  }
+}
+
+/* ---------- 事件绑定 ---------- */
+$('loginBtn').onclick = doLogin;
+$('idInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('editBtn').onclick = () => openModal(false);
+$('modalCancel').onclick = closeModal;
+$('modalOk').onclick = saveProfile;
+$('modalBg').addEventListener('click', e => {
+  if (e.target === $('modalBg')) closeModal();
+});
+
+/* ---------- SSE 实时同步 ---------- */
+const evtSource = new EventSource(API + '/api/events');
+evtSource.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    if (!meta) return;
+
+    // 局数变化 → 切换
+    if (typeof data.currentGame === 'number' && data.currentGame !== meta.currentGame) {
+      const oldGame = meta.currentGame;
+      meta.currentGame = data.currentGame;
+      renderHeroGrid();
+      renderHistory();
+      toast('已进入第 ' + (data.currentGame + 1) + ' 局');
+    }
+
+    // 段位/场伤 可能被自己或者他处改了 → 同步
+    if (state) {
+      const me = data.players.find(p => p.id === playerId);
+      if (me) {
+        const changed = state.tier !== me.tier || state.damage !== me.damage ||
+                        JSON.stringify(state.heroes) !== JSON.stringify(me.heroes);
+        if (changed) {
+          state.tier = me.tier;
+          state.damage = me.damage;
+          state.heroes = me.heroes;
+          state.kills = me.kills;
+          state.ranks = me.ranks;
+          renderAll();
+        }
+      }
+    }
+  } catch (err) { /* 忽略 */ }
+};
+
+/* ---------- 自动登录 ---------- */
+(function init() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    playerId = saved;
+    loadPlayerState(true);
+  } else {
+    showLogin();
+  }
+})();
+</script>
+</body>
+</html>
