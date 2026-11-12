@@ -57,8 +57,8 @@
                  margin-bottom:12px;display:flex;align-items:center;gap:8px}
   .section-title .g{margin-left:auto;font-size:11px;color:#8b8f9a;font-weight:400}
 
-  /* ===== 英雄格 ===== */
-  .hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  /* ===== 英雄纯文字格 ===== */
+  .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   @media (min-width:768px){
     body{padding:24px}
     .wrap{max-width:1100px;padding-bottom:60px}
@@ -71,18 +71,17 @@
     .topbar{padding:18px 22px}
   }
 
-  .hero-cell{position:relative;aspect-ratio:1/1;border:2px solid rgba(255,255,255,.08);
-             border-radius:10px;background:rgba(255,255,255,.02);cursor:pointer;
-             display:flex;align-items:center;justify-content:center;overflow:hidden;
-             transition:.15s;padding:4px}
+  /* 去掉图片后的文字按钮样式 */
+  .hero-cell{
+    position:relative; padding: 14px 4px; border:2px solid rgba(255,255,255,.08);
+    border-radius:10px; background:rgba(255,255,255,.02); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    transition:.15s; font-size: 15px; font-weight: 700; color: #c9c7c2;
+    text-align: center;
+  }
   .hero-cell:active{transform:scale(.95)}
-  .hero-cell img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
-  .hero-cell .nm{position:absolute;bottom:0;left:0;right:0;font-size:10px;text-align:center;
-                 color:#c9c7c2;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);
-                 padding:8px 2px 3px;pointer-events:none;
-                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hero-cell.selected{border-color:#e6c377;background:rgba(230,195,119,.16);
-                      box-shadow:0 0 14px rgba(230,195,119,.5)}
+                      box-shadow:0 0 14px rgba(230,195,119,.5); color: #e6c377;}
   .hero-cell.selected::after{content:"✓";position:absolute;top:4px;right:6px;
                              color:#0c0d11;background:#e6c377;font-size:11px;font-weight:900;
                              width:18px;height:18px;border-radius:50%;display:flex;
@@ -100,11 +99,6 @@
   .history-item:last-child{border-bottom:none}
   .h-game{font-size:12px;color:#8b8f9a;width:52px;flex-shrink:0}
   .h-game.now{color:#e6c377;font-weight:700}
-  .h-hero{width:32px;height:32px;flex-shrink:0;border-radius:6px;
-          background:rgba(255,255,255,.04);display:flex;align-items:center;
-          justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-  .h-hero img{width:100%;height:100%;object-fit:contain}
-  .h-hero .q{color:#444;font-size:16px;font-weight:900}
   .h-name{flex:1;font-size:13px;color:#d5d3ce;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .h-name.dim{color:#555}
   .h-stat{font-size:12px;color:#8b8f9a;text-align:right;white-space:nowrap}
@@ -145,7 +139,6 @@
 </head>
 <body>
 
-<!-- ========== 登录 ========== -->
 <div id="loginView">
   <div class="login">
     <h1>🎮 选手登录</h1>
@@ -156,9 +149,7 @@
   </div>
 </div>
 
-<!-- ========== 主界面 ========== -->
 <div id="mainView" class="wrap" style="display:none">
-
   <div class="topbar">
     <div class="avatar" id="avatarBox">?</div>
     <div class="info">
@@ -169,10 +160,7 @@
   </div>
 
   <div class="section">
-    <div class="section-title">
-      ⚔ 选择英雄
-      <span class="g" id="gameLabel">第1局</span>
-    </div>
+    <div class="section-title">⚔ 选择英雄 <span class="g" id="gameLabel">第1局</span></div>
     <div class="hero-grid" id="heroGrid"></div>
   </div>
 
@@ -180,18 +168,14 @@
     <div class="section-title">📊 我的战绩</div>
     <div id="historyList"></div>
   </div>
-
 </div>
 
-<!-- ========== 资料编辑弹层 ========== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h3 id="modalTitle">完善资料</h3>
     <div class="modal-sub" id="modalSub">段位和场伤只需要填写一次</div>
     <label>段位</label>
-    <select id="tierSelect">
-      <option value="">未填写</option>
-    </select>
+    <select id="tierSelect"><option value="">未填写</option></select>
     <label>场伤</label>
     <input id="damageInput" type="number" min="0" placeholder="例如：12000">
     <div class="modal-btns">
@@ -213,16 +197,14 @@ let playerId = null;
 let state = null;
 let meta = null;
 let heroList = [];
-let profileCompleted = false;   // 资料是否已完善（用于首次弹层）
+let profileCompleted = false;
 let modalShownThisSession = false;
 
-/* ---------- 工具 ---------- */
 const stripExt = n => String(n).replace(/\.[^/.]+$/, '');
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-// 修改：排名分 10 8 7 6 5 4 3 2 1
 function calcGameScore(kills, rank) {
   const kp = (kills || 0) * 1.5;
   const rp = rank
@@ -242,7 +224,6 @@ function toast(msg, isError) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-/* ---------- 登录 ---------- */
 async function doLogin() {
   const id = $('idInput').value.trim();
   $('loginErr').textContent = '';
@@ -267,61 +248,30 @@ async function loadPlayerState(firstTime) {
   if (!playerId) return;
   try {
     const res = await fetch(API + '/api/player/state?id=' + encodeURIComponent(playerId));
-    if (!res.ok) {
-      localStorage.removeItem(LS_KEY);
-      playerId = null;
-      showLogin();
-      return;
-    }
+    if (!res.ok) { localStorage.removeItem(LS_KEY); playerId = null; showLogin(); return; }
     const data = await res.json();
     state = data.player;
-    meta = {
-      currentGame: data.currentGame,
-      maxGames: data.maxGames,
-      threshold: data.threshold
-    };
+    meta = { currentGame: data.currentGame, maxGames: data.maxGames, threshold: data.threshold };
     heroList = data.assets.heroes || [];
-
     profileCompleted = !!(state.tier || state.damage !== '' && state.damage != null);
-
     showMain();
     renderAll();
-
-    // 首次登录且资料未完善 → 自动弹出
     if (firstTime && !profileCompleted && !modalShownThisSession) {
       modalShownThisSession = true;
-      setTimeout(() => {
-        $('modalTitle').textContent = '完善资料';
-        $('modalSub').textContent = '段位和场伤只需要填写一次';
-        openModal(true);
-      }, 300);
+      setTimeout(() => { $('modalTitle').textContent = '完善资料'; $('modalSub').textContent = '段位和场伤只需要填写一次'; openModal(true); }, 300);
     }
   } catch (e) { /* 静默 */ }
 }
 
-/* ---------- 视图切换 ---------- */
-function showLogin() {
-  $('loginView').style.display = '';
-  $('mainView').style.display = 'none';
-}
-function showMain() {
-  $('loginView').style.display = 'none';
-  $('mainView').style.display = '';
-}
+function showLogin() { $('loginView').style.display = ''; $('mainView').style.display = 'none'; }
+function showMain() { $('loginView').style.display = 'none'; $('mainView').style.display = ''; }
 
-/* ---------- 渲染 ---------- */
-function renderAll() {
-  renderHeader();
-  renderHeroGrid();
-  renderHistory();
-}
+function renderAll() { renderHeader(); renderHeroGrid(); renderHistory(); }
 
 function renderHeader() {
   const p = state;
   const initial = escapeHtml(stripExt(p.id)).charAt(0) || '?';
-  $('avatarBox').innerHTML = p.avatar
-    ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" onerror="this.parentNode.textContent='${initial}'">`
-    : initial;
+  $('avatarBox').innerHTML = p.avatar ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" onerror="this.parentNode.textContent='${initial}'">` : initial;
   $('pName').textContent = p.id;
 
   const hasTier = !!p.tier;
@@ -338,29 +288,19 @@ function renderHeader() {
     if (hint) hint.onclick = () => openModal(false);
   }
 
-  // 未完善资料 → 编辑按钮高亮提醒
   const btn = $('editBtn');
-  if (!hasTier && !hasDmg) {
-    btn.classList.add('highlight');
-  } else {
-    btn.classList.remove('highlight');
-  }
+  if (!hasTier && !hasDmg) { btn.classList.add('highlight'); } else { btn.classList.remove('highlight'); }
 }
 
 function renderHeroGrid() {
   const g = meta.currentGame;
   $('gameLabel').textContent = `第${g + 1}局`;
 
-  if (!heroList.length) {
-    $('heroGrid').innerHTML = '<div class="empty-hint">英雄库为空，请联系管理员</div>';
-    return;
-  }
+  if (!heroList.length) { $('heroGrid').innerHTML = '<div class="empty-hint">英雄库为空，请联系管理员</div>'; return; }
 
   const currentHero = state.heroes[g] || '';
   const usedElsewhere = new Set();
-  for (let i = 0; i < meta.maxGames; i++) {
-    if (i !== g && state.heroes[i]) usedElsewhere.add(state.heroes[i]);
-  }
+  for (let i = 0; i < meta.maxGames; i++) { if (i !== g && state.heroes[i]) usedElsewhere.add(state.heroes[i]); }
 
   let html = '';
   heroList.forEach(h => {
@@ -370,30 +310,24 @@ function renderHeroGrid() {
     let cls = 'hero-cell';
     if (isUsed) cls += ' used';
     else if (isSel) cls += ' selected';
+    // 这里移除了图片，只保留纯文字
     html += `<div class="${cls}" data-hero="${safe}">
-      <img src="/heroes/${encodeURIComponent(h)}" onerror="this.style.visibility='hidden'">
       <div class="nm">${escapeHtml(stripExt(h))}</div>
     </div>`;
   });
   $('heroGrid').innerHTML = html;
 
-  $('heroGrid').querySelectorAll('.hero-cell').forEach(el => {
-    el.addEventListener('click', onHeroClick);
-  });
+  $('heroGrid').querySelectorAll('.hero-cell').forEach(el => { el.addEventListener('click', onHeroClick); });
 }
 
 async function onHeroClick(e) {
   const cell = e.currentTarget;
-  if (cell.classList.contains('used')) {
-    toast('该英雄你在其他局已经用过了', true);
-    return;
-  }
+  if (cell.classList.contains('used')) { toast('该英雄你在其他局已经用过了', true); return; }
   const hero = cell.dataset.hero;
   const g = meta.currentGame;
   const current = state.heroes[g] || '';
   const newHero = (current === hero) ? '' : hero;
 
-  // 乐观更新
   const oldHero = current;
   state.heroes[g] = newHero;
   renderHeroGrid();
@@ -401,25 +335,17 @@ async function onHeroClick(e) {
 
   try {
     const res = await fetch(API + '/api/player/hero', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: playerId, game: g, hero: newHero })
     });
     const data = await res.json();
     if (!res.ok) {
-      state.heroes[g] = oldHero;
-      renderHeroGrid();
-      renderHistory();
-      toast(data.error || '提交失败', true);
-      return;
+      state.heroes[g] = oldHero; renderHeroGrid(); renderHistory(); toast(data.error || '提交失败', true); return;
     }
     if (newHero) toast('已选择 ' + stripExt(newHero));
     else toast('已取消选择');
   } catch (err) {
-    state.heroes[g] = oldHero;
-    renderHeroGrid();
-    renderHistory();
-    toast('网络错误', true);
+    state.heroes[g] = oldHero; renderHeroGrid(); renderHistory(); toast('网络错误', true);
   }
 }
 
@@ -434,104 +360,67 @@ function renderHistory() {
 
     html += '<div class="history-item">';
     html += `<div class="h-game${isNow ? ' now' : ''}">第${g + 1}局</div>`;
-
     if (hero) {
-      html += `<div class="h-hero"><img src="/heroes/${encodeURIComponent(hero)}" onerror="this.parentNode.innerHTML='<span class=q>?</span>'"></div>`;
-      html += `<div class="h-name">${escapeHtml(stripExt(hero))}</div>`;
+      html += `<div class="h-name">${escapeHtml(stripExt(hero))}</div>`; // 纯文字
     } else {
-      html += `<div class="h-hero"><span class="q">?</span></div>`;
       html += `<div class="h-name dim">未选择</div>`;
     }
-
-    html += `<div class="h-stat">`;
-    html += `<span class="kill">${kills}杀</span>`;
-    html += `<span class="rank">${rank ? '#' + rank : '—'}</span>`;
-    html += `<span class="score${score > 0 ? '' : ' zero'}">${score > 0 ? '+' + score.toFixed(1) : '0.0'}</span>`;
-    html += `</div></div>`;
+    html += `<div class="h-stat">
+      <span class="kill">${kills}杀</span>
+      <span class="rank">${rank ? '#' + rank : '—'}</span>
+      <span class="score${score > 0 ? '' : ' zero'}">${score > 0 ? '+' + score.toFixed(1) : '0.0'}</span>
+    </div></div>`;
   }
   $('historyList').innerHTML = html;
 }
 
-/* ---------- 资料编辑 ---------- */
 function openModal(isFirst) {
   const sel = $('tierSelect');
   sel.innerHTML = '<option value="">未填写</option>';
-  TIERS.forEach(t => {
-    sel.innerHTML += `<option value="${t}" ${state.tier === t ? 'selected' : ''}>${t}</option>`;
-  });
+  TIERS.forEach(t => { sel.innerHTML += `<option value="${t}" ${state.tier === t ? 'selected' : ''}>${t}</option>`; });
   $('damageInput').value = state.damage || '';
   $('modalBg').classList.add('show');
   $('modalCancel').textContent = isFirst ? '稍后' : '取消';
 }
-function closeModal() {
-  $('modalBg').classList.remove('show');
-}
+function closeModal() { $('modalBg').classList.remove('show'); }
 async function saveProfile() {
   const tier = $('tierSelect').value;
   const damage = $('damageInput').value.trim();
-
-  if (!tier && !damage) {
-    toast('请至少填写一项', true);
-    return;
-  }
-
+  if (!tier && !damage) { toast('请至少填写一项', true); return; }
   try {
     const res = await fetch(API + '/api/player/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: playerId, tier, damage })
     });
     const data = await res.json();
     if (!res.ok) { toast(data.error || '保存失败', true); return; }
-    state.tier = tier;
-    state.damage = damage;
-    profileCompleted = !!(tier || damage);
-    renderHeader();
-    closeModal();
-    toast('资料已保存，之后无需再填');
-  } catch (e) {
-    toast('网络错误', true);
-  }
+    state.tier = tier; state.damage = damage; profileCompleted = !!(tier || damage);
+    renderHeader(); closeModal(); toast('资料已保存，之后无需再填');
+  } catch (e) { toast('网络错误', true); }
 }
 
-/* ---------- 事件绑定 ---------- */
 $('loginBtn').onclick = doLogin;
 $('idInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 $('editBtn').onclick = () => openModal(false);
 $('modalCancel').onclick = closeModal;
 $('modalOk').onclick = saveProfile;
-$('modalBg').addEventListener('click', e => {
-  if (e.target === $('modalBg')) closeModal();
-});
+$('modalBg').addEventListener('click', e => { if (e.target === $('modalBg')) closeModal(); });
 
-/* ---------- SSE 实时同步 ---------- */
 const evtSource = new EventSource(API + '/api/events');
 evtSource.onmessage = (e) => {
   try {
     const data = JSON.parse(e.data);
     if (!meta) return;
-
-    // 局数变化 → 切换
     if (typeof data.currentGame === 'number' && data.currentGame !== meta.currentGame) {
-      const oldGame = meta.currentGame;
-      meta.currentGame = data.currentGame;
-      renderHeroGrid();
-      renderHistory();
+      meta.currentGame = data.currentGame; renderHeroGrid(); renderHistory();
       toast('已进入第 ' + (data.currentGame + 1) + ' 局');
     }
-
-    // 段位/场伤 可能被自己或者他处改了 → 同步
     if (state) {
       const me = data.players.find(p => p.id === playerId);
       if (me) {
-        const changed = state.tier !== me.tier || state.damage !== me.damage ||
-                        JSON.stringify(state.heroes) !== JSON.stringify(me.heroes);
+        const changed = state.tier !== me.tier || state.damage !== me.damage || JSON.stringify(state.heroes) !== JSON.stringify(me.heroes);
         if (changed) {
-          state.tier = me.tier;
-          state.damage = me.damage;
-          state.heroes = me.heroes;
-          state.kills = me.kills;
-          state.ranks = me.ranks;
+          state.tier = me.tier; state.damage = me.damage; state.heroes = me.heroes; state.kills = me.kills; state.ranks = me.ranks;
           renderAll();
         }
       }
@@ -539,15 +428,9 @@ evtSource.onmessage = (e) => {
   } catch (err) { /* 忽略 */ }
 };
 
-/* ---------- 自动登录 ---------- */
 (function init() {
   const saved = localStorage.getItem(LS_KEY);
-  if (saved) {
-    playerId = saved;
-    loadPlayerState(true);
-  } else {
-    showLogin();
-  }
+  if (saved) { playerId = saved; loadPlayerState(true); } else { showLogin(); }
 })();
 </script>
 </body>
