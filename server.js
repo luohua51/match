@@ -12,7 +12,7 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
-app.use(cors()); // 👈 【新增这一行：允许所有域名跨域访问】
+app.use(cors()); // force update for CORS 123
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
