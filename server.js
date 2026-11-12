@@ -47,7 +47,7 @@ function defaultData() {
   return {
     players,
     currentGame: 0,
-    threshold: 19,
+    threshold: 39,  // 修改：默认赛点 39
     maxGames: 5,
     visible: true,
     scoreboardCollapsed: false,
@@ -78,7 +78,7 @@ function normalizeState(s) {
     p.ranks  = p.ranks.slice(0, s.maxGames);
   });
   if (typeof s.currentGame !== 'number') s.currentGame = 0;
-  if (typeof s.threshold !== 'number') s.threshold = 19;
+  if (typeof s.threshold !== 'number' || s.threshold === 19) s.threshold = 39; // 兼容旧数据：自动升级为 39
   if (typeof s.maxGames !== 'number') s.maxGames = 5;
   if (typeof s.visible !== 'boolean') s.visible = true;
   if (typeof s.scoreboardCollapsed !== 'boolean') s.scoreboardCollapsed = false;
@@ -133,10 +133,21 @@ function computeStandings(s) {
       const rank = p.ranks[g];
       const hero = p.heroes ? (p.heroes[g] || '') : '';
       const killPoints = kills * 1.5;
+      
+      // 修改：排名分 10 8 7 6 5 4 3 2 1
       const rankPoints = rank
-        ? rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 5
-        : rank === 4 ? 4 : rank === 5 ? 3 : rank === 6 ? 2 : rank === 7 ? 1 : 0
+        ? rank === 1 ? 10
+        : rank === 2 ? 8
+        : rank === 3 ? 7
+        : rank === 4 ? 6
+        : rank === 5 ? 5
+        : rank === 6 ? 4
+        : rank === 7 ? 3
+        : rank === 8 ? 2
+        : rank === 9 ? 1
+        : 0
         : 0;
+
       const gameTotal = killPoints + rankPoints;
       total += gameTotal;
       games.push({ kills, rank, hero, killPoints, rankPoints, gameTotal, totalBefore: total - gameTotal });

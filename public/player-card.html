@@ -355,7 +355,9 @@ function updateCardContent(p, data) {
   // 徽章
   const mpBadge = document.getElementById('mpBadge');
   const champBadge = document.getElementById('champBadge');
-  const isMP = p.total >= (threshold || 19);
+  
+  // 修改：赛点兜底 39
+  const isMP = p.total >= (threshold || 39);
   mpBadge.style.display = (isMP && !p.isChampion) ? 'inline-block' : 'none';
   champBadge.style.display = p.isChampion ? 'inline-block' : 'none';
 
@@ -406,8 +408,10 @@ function updateCardContent(p, data) {
   // 赛点标记
   let mpMark = '';
   const gameObj = p.games[cg];
-  if (gameObj && gameObj.totalBefore < (threshold || 19) &&
-      (gameObj.totalBefore + gameObj.gameTotal) >= (threshold || 19)) {
+  
+  // 修改：赛点标记兜底 39
+  if (gameObj && gameObj.totalBefore < (threshold || 39) &&
+      (gameObj.totalBefore + gameObj.gameTotal) >= (threshold || 39)) {
     mpMark = '<span class="mark">赛</span>';
   }
   document.getElementById('currentDetail').innerHTML = detailParts.join(' · ') + mpMark;

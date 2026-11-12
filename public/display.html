@@ -531,9 +531,12 @@ function renderHeroWall(data) {
     const kills = p.kills[g] || 0;
     const rank = p.ranks[g];
     const killPoints = kills * 1.5;
+    
+    // 修改：英雄墙里的排名分逻辑 10/8/7/6/5/4/3/2/1
     const rankPoints = rank
-      ? (rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 5
-         : rank === 4 ? 4 : rank === 5 ? 3 : rank === 6 ? 2 : rank === 7 ? 1 : 0)
+      ? (rank === 1 ? 10 : rank === 2 ? 8 : rank === 3 ? 7
+         : rank === 4 ? 6 : rank === 5 ? 5 : rank === 6 ? 4 
+         : rank === 7 ? 3 : rank === 8 ? 2 : rank === 9 ? 1 : 0)
       : 0;
     const gameScore = killPoints + rankPoints;
 
@@ -542,7 +545,8 @@ function renderHeroWall(data) {
       const k = p.kills[i] || 0;
       const r = p.ranks[i];
       total += k * 1.5;
-      total += r ? (r === 1 ? 8 : r === 2 ? 6 : r === 3 ? 5 : r === 4 ? 4 : r === 5 ? 3 : r === 6 ? 2 : r === 7 ? 1 : 0) : 0;
+      // 修改：总积分里的排名分逻辑
+      total += r ? (r === 1 ? 10 : r === 2 ? 8 : r === 3 ? 7 : r === 4 ? 6 : r === 5 ? 5 : r === 6 ? 4 : r === 7 ? 3 : r === 8 ? 2 : r === 9 ? 1 : 0) : 0;
     }
 
     const avatarHtml = p.avatar
@@ -606,7 +610,8 @@ function buildFocusBody(data, p, showDots) {
   const rank = gameData.rank;
   const kills = gameData.kills || 0;
 
-  const isMP = p.total >= (data.threshold || 19) && !p.isChampion;
+  // 修改：聚焦里的赛点判定，|| 19 改 || 39
+  const isMP = p.total >= (data.threshold || 39) && !p.isChampion;
   const badgeHtml = p.isChampion
     ? '<div class="focus-badge champ">🏆 冠军</div>'
     : (isMP ? '<div class="focus-badge mp">赛 点</div>' : '');
@@ -750,7 +755,9 @@ function updateCarouselContent() {
 function renderScoreboard(data) {
   const standings = data.standings || [];
   const maxGames = data.maxGames || 5;
-  const threshold = data.threshold || 19;
+  
+  // 修改：积分榜的赛点兜底 39
+  const threshold = data.threshold || 39;
 
   let headHtml = '<div class="sb-head"><div>名次</div><div>头像</div><div>选手</div>';
   for (let g = 0; g < maxGames; g++) headHtml += `<div>第${g + 1}局</div>`;

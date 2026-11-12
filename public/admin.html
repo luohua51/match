@@ -95,7 +95,8 @@
 </head>
 <body>
   <h1>永劫无间 · 赛点积分赛控制台</h1>
-  <div class="sub">击杀分 1.5 / 个 · 排名分 8/6/5/4/3/2/1 · 赛点 19 分 · 五局制</div>
+  <!-- 修改点1：提示文字修改为 10/8/7/6/5/4/3/2/1 和 39分 -->
+  <div class="sub">击杀分 1.5 / 个 · 排名分 10/8/7/6/5/4/3/2/1 · 赛点 39 分 · 五局制</div>
 
   <div class="toolbar">
     <div class="game-selector">
@@ -201,11 +202,14 @@ function stripExt(name) { return String(name).replace(/\.[^/.]+$/, ''); }
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
+
+// 修改点2：积分计算逻辑
 function calcGameScore(kills, rank) {
   const kp = (kills || 0) * 1.5;
   const rp = rank
-    ? rank === 1 ? 8 : rank === 2 ? 6 : rank === 3 ? 5
-    : rank === 4 ? 4 : rank === 5 ? 3 : rank === 6 ? 2 : rank === 7 ? 1 : 0
+    ? rank === 1 ? 10 : rank === 2 ? 8 : rank === 3 ? 7
+    : rank === 4 ? 6 : rank === 5 ? 5 : rank === 6 ? 4 
+    : rank === 7 ? 3 : rank === 8 ? 2 : rank === 9 ? 1 : 0
     : 0;
   return kp + rp;
 }

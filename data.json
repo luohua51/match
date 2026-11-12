@@ -1,8 +1,35 @@
 {
   "players": [
     {
-      "id": "选手1",
-      "avatar": "",
+      "id": "八级大狂风",
+      "avatar": "八级大狂风.webp",
+      "tier": "",
+      "damage": "",
+      "heroes": [
+        "万钧.webp",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "kills": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranks": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "id": "土豆",
+      "avatar": "土豆.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -28,8 +55,8 @@
       ]
     },
     {
-      "id": "选手2",
-      "avatar": "",
+      "id": "小小嘉",
+      "avatar": "天天开心小小嘉.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -55,8 +82,8 @@
       ]
     },
     {
-      "id": "选手3",
-      "avatar": "",
+      "id": "妥协",
+      "avatar": "妥协.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -82,8 +109,8 @@
       ]
     },
     {
-      "id": "选手4",
-      "avatar": "",
+      "id": "小予",
+      "avatar": "小予.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -109,8 +136,8 @@
       ]
     },
     {
-      "id": "选手5",
-      "avatar": "",
+      "id": "小申",
+      "avatar": "小申.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -136,8 +163,8 @@
       ]
     },
     {
-      "id": "选手6",
-      "avatar": "",
+      "id": "小虎",
+      "avatar": "小虎.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -163,8 +190,8 @@
       ]
     },
     {
-      "id": "选手7",
-      "avatar": "",
+      "id": "你的心思难猜",
+      "avatar": "你的心思难懂.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -190,8 +217,8 @@
       ]
     },
     {
-      "id": "选手8",
-      "avatar": "",
+      "id": "小运",
+      "avatar": "小运.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -217,8 +244,8 @@
       ]
     },
     {
-      "id": "选手9",
-      "avatar": "",
+      "id": "雨眠",
+      "avatar": "雨眠.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -244,8 +271,8 @@
       ]
     },
     {
-      "id": "选手10",
-      "avatar": "",
+      "id": "鸽子",
+      "avatar": "鸽子.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -256,14 +283,14 @@
         ""
       ],
       "kills": [
-        0,
+        8,
         0,
         0,
         0,
         0
       ],
       "ranks": [
-        null,
+        1,
         null,
         null,
         null,
@@ -271,35 +298,8 @@
       ]
     },
     {
-      "id": "选手11",
-      "avatar": "",
-      "tier": "",
-      "damage": "",
-      "heroes": [
-        "",
-        "",
-        "",
-        "",
-        ""
-      ],
-      "kills": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "ranks": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ]
-    },
-    {
-      "id": "选手12",
-      "avatar": "",
+      "id": "璇璇",
+      "avatar": "璇璇.webp",
       "tier": "",
       "damage": "",
       "heroes": [
@@ -326,13 +326,13 @@
     }
   ],
   "currentGame": 0,
-  "threshold": 19,
+  "threshold": 39,
   "maxGames": 5,
   "visible": true,
   "scoreboardCollapsed": false,
   "champion": null,
   "cardPlayerId": null,
   "displayMode": "hero-wall",
-  "focusPlayerId": null,
-  "carouselRunning": false
+  "focusPlayerId": "八级大狂风",
+  "carouselRunning": true
 }
