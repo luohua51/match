@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors'); // 👈 【新增这一行：引入跨域模块】
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -11,6 +12,7 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
+app.use(cors()); // 👈 【新增这一行：允许所有域名跨域访问】
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
