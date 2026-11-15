@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors'); // 👈 【新增这一行：引入跨域模块】
+const cors = require('cors'); // 👈 跨域模块
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -12,7 +12,7 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
-app.use(cors()); // force update for CORS 123
+app.use(cors()); // 👈 允许所有域名跨域访问
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -49,7 +49,7 @@ function defaultData() {
   return {
     players,
     currentGame: 0,
-    threshold: 39,  // 修改：默认赛点 39
+    threshold: 39,
     maxGames: 5,
     visible: true,
     scoreboardCollapsed: false,
@@ -80,7 +80,7 @@ function normalizeState(s) {
     p.ranks  = p.ranks.slice(0, s.maxGames);
   });
   if (typeof s.currentGame !== 'number') s.currentGame = 0;
-  if (typeof s.threshold !== 'number' || s.threshold === 19) s.threshold = 39; // 兼容旧数据：自动升级为 39
+  if (typeof s.threshold !== 'number' || s.threshold === 19) s.threshold = 39; 
   if (typeof s.maxGames !== 'number') s.maxGames = 5;
   if (typeof s.visible !== 'boolean') s.visible = true;
   if (typeof s.scoreboardCollapsed !== 'boolean') s.scoreboardCollapsed = false;
@@ -136,7 +136,6 @@ function computeStandings(s) {
       const hero = p.heroes ? (p.heroes[g] || '') : '';
       const killPoints = kills * 1.5;
       
-      // 修改：排名分 10 8 7 6 5 4 3 2 1
       const rankPoints = rank
         ? rank === 1 ? 10
         : rank === 2 ? 8
@@ -212,7 +211,7 @@ app.get('/api/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');   // 关键：禁用反向代理缓冲
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
   const client = { id: Date.now() + Math.random(), res };
@@ -221,7 +220,6 @@ app.get('/api/events', (req, res) => {
   const standings = computeStandings(state);
   res.write(`data: ${JSON.stringify({ ...state, standings })}\n\n`);
 
-  // 每 25 秒发一次心跳，防止 Railway / 代理断开
   const heartbeat = setInterval(() => {
     try { res.write(': ping\n\n'); } catch (e) {}
   }, 25000);
