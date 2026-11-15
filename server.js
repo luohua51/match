@@ -1,22 +1,23 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors'); // 👈 跨域模块
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ============ 数据目录（Railway Volume 持久化） ============ */
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 if (!fs.existsSync(DATA_DIR)) {
   try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 }
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
-app.use(cors()); // 👈 允许所有域名跨域访问
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* ============ 资源扫描 ============ */
+// 简易防刷内存记录：记录每个 IP 投出的票数
+const ipVotes = {};
+
 function getAssetFiles(dir) {
   const fullPath = path.join(__dirname, 'public', dir);
   try {
@@ -27,7 +28,6 @@ function getAssetFiles(dir) {
   } catch (e) { return []; }
 }
 
-/* ============ 数据结构 ============ */
 const MAX_PLAYERS = 16;
 const DISPLAY_MODES = ['hero-wall', 'focus', 'carousel', 'scoreboard', 'hidden'];
 
@@ -39,7 +39,8 @@ function defaultPlayer(i) {
     damage: '',
     heroes: new Array(5).fill(''),
     kills: new Array(5).fill(0),
-    ranks: new Array(5).fill(null)
+    ranks: new Array(5).fill(null),
+    votes: 0 // 👈 新增：人气值
   };
 }
 
@@ -61,7 +62,6 @@ function defaultData() {
   };
 }
 
-/* ============ 数据清洗 ============ */
 function normalizeState(s) {
   if (!Array.isArray(s.players)) s.players = [];
   s.players.forEach(p => {
@@ -72,6 +72,8 @@ function normalizeState(s) {
     p.heroes = Array.isArray(p.heroes) ? p.heroes : [];
     p.kills  = Array.isArray(p.kills)  ? p.kills  : [];
     p.ranks  = Array.isArray(p.ranks)  ? p.ranks  : [];
+    p.votes = typeof p.votes === 'number' ? p.votes : 0; // 👈 兼容旧数据
+    
     while (p.heroes.length < s.maxGames) p.heroes.push('');
     while (p.kills.length  < s.maxGames) p.kills.push(0);
     while (p.ranks.length  < s.maxGames) p.ranks.push(null);
@@ -91,7 +93,6 @@ function normalizeState(s) {
   return s;
 }
 
-/* ============ 加载 ============ */
 let state = defaultData();
 
 if (fs.existsSync(DATA_FILE)) {
@@ -111,19 +112,16 @@ if (fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2));
     console.log('📝 首次启动，已创建:', DATA_FILE);
   } catch (e) {
-    console.error('❌ 创建数据文件失败（可能目录只读）:', e.message);
+    console.error('❌ 创建数据文件失败:', e.message);
   }
 }
 
 function saveData() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2));
-  } catch (e) {
-    console.error('❌ 保存数据失败:', e.message);
-  }
+  } catch (e) { console.error('❌ 保存失败:', e.message); }
 }
 
-/* ============ 积分 & 冠军 ============ */
 function computeStandings(s) {
   const { maxGames, threshold } = s;
 
@@ -137,16 +135,9 @@ function computeStandings(s) {
       const killPoints = kills * 1.5;
       
       const rankPoints = rank
-        ? rank === 1 ? 10
-        : rank === 2 ? 8
-        : rank === 3 ? 7
-        : rank === 4 ? 6
-        : rank === 5 ? 5
-        : rank === 6 ? 4
-        : rank === 7 ? 3
-        : rank === 8 ? 2
-        : rank === 9 ? 1
-        : 0
+        ? rank === 1 ? 10 : rank === 2 ? 8 : rank === 3 ? 7
+        : rank === 4 ? 6 : rank === 5 ? 5 : rank === 6 ? 4
+        : rank === 7 ? 3 : rank === 8 ? 2 : rank === 9 ? 1 : 0
         : 0;
 
       const gameTotal = killPoints + rankPoints;
@@ -158,7 +149,7 @@ function computeStandings(s) {
       avatar: p.avatar || '',
       tier: p.tier || '',
       damage: p.damage || '',
-      total, games, index: idx
+      total, games, votes: p.votes, index: idx
     };
   });
 
@@ -197,7 +188,6 @@ function computeStandings(s) {
   return players.map(({ index, ...rest }) => rest);
 }
 
-/* ============ SSE ============ */
 let clients = [];
 function broadcast() {
   const standings = computeStandings(state);
@@ -230,7 +220,6 @@ app.get('/api/events', (req, res) => {
   });
 });
 
-/* ============ 管理员 API ============ */
 app.get('/api/state', (req, res) => {
   res.json({
     ...state,
@@ -244,18 +233,15 @@ app.get('/api/state', (req, res) => {
 
 app.post('/api/update', (req, res) => {
   const ns = req.body;
-  if (!ns.players || !Array.isArray(ns.players)) {
-    return res.status(400).json({ error: '无效数据' });
-  }
-  if (ns.players.length < 2 || ns.players.length > MAX_PLAYERS) {
-    return res.status(400).json({ error: `选手数量必须在 2-${MAX_PLAYERS} 之间` });
-  }
+  if (!ns.players || !Array.isArray(ns.players)) return res.status(400).json({ error: '无效数据' });
+  if (ns.players.length < 2 || ns.players.length > MAX_PLAYERS) return res.status(400).json({ error: `数量 2-${MAX_PLAYERS}` });
+  
   const merged = ns.players.map((p, i) => {
     const old = state.players.find(op => op.id === p.id) || state.players[i] || {};
     return {
       ...old,
       ...p,
-      tier:   p.tier   !== undefined ? p.tier   : (old.tier   || ''),
+      tier: p.tier !== undefined ? p.tier : (old.tier || ''),
       damage: p.damage !== undefined ? p.damage : (old.damage || ''),
       heroes: p.heroes || old.heroes || new Array(state.maxGames).fill('')
     };
@@ -277,39 +263,32 @@ app.post('/api/update', (req, res) => {
 
 app.post('/api/reset', (req, res) => {
   state = defaultData();
+  ipVotes = {}; // 重置时清空 IP 记录
   saveData();
   broadcast();
   res.json({ ok: true });
 });
 
 app.post('/api/add-player', (req, res) => {
-  if (state.players.length >= MAX_PLAYERS) {
-    return res.status(400).json({ error: `最多 ${MAX_PLAYERS} 名选手` });
-  }
+  if (state.players.length >= MAX_PLAYERS) return res.status(400).json({ error: `最多 ${MAX_PLAYERS} 名` });
   state.players.push(defaultPlayer(state.players.length + 1));
   saveData();
   broadcast();
   res.json({ ok: true, state });
 });
 
-/* ============ 切换当前局 ============ */
 app.post('/api/game/current', (req, res) => {
   const g = parseInt((req.body || {}).game);
-  if (isNaN(g) || g < 0 || g >= state.maxGames) {
-    return res.status(400).json({ error: '无效局数' });
-  }
+  if (isNaN(g) || g < 0 || g >= state.maxGames) return res.status(400).json({ error: '无效局数' });
   state.currentGame = g;
   saveData();
   broadcast();
   res.json({ ok: true });
 });
 
-/* ============ 展示模式控制 ============ */
 app.post('/api/display/mode', (req, res) => {
   const { mode, focusPlayerId, carouselRunning } = req.body || {};
-  if (mode && DISPLAY_MODES.includes(mode)) {
-    state.displayMode = mode;
-  }
+  if (mode && DISPLAY_MODES.includes(mode)) state.displayMode = mode;
   if (focusPlayerId !== undefined) state.focusPlayerId = focusPlayerId;
   if (typeof carouselRunning === 'boolean') state.carouselRunning = carouselRunning;
   saveData();
@@ -317,7 +296,39 @@ app.post('/api/display/mode', (req, res) => {
   res.json({ ok: true });
 });
 
-/* ============ 选手 API ============ */
+// 👇 ====== 新增：观众投票 API ======
+app.post('/api/player/vote', (req, res) => {
+  const { id, amount } = req.body || {};
+  if (!id || !amount || amount <= 0) return res.status(400).json({ error: '无效的投票' });
+  
+  // 限制单次投注最高 100
+  if (amount > 100) return res.status(400).json({ error: '单次最多投 100' });
+
+  // 获取真实 IP (Railway 等云服务通常需要用 x-forwarded-for)
+  let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  if (clientIp.includes(',')) clientIp = clientIp.split(',')[0].trim();
+
+  // 防刷逻辑：限制每个 IP 最多投 100 票
+  const currentIpVotes = ipVotes[clientIp] || 0;
+  if (currentIpVotes + amount > 100) {
+    return res.status(403).json({ error: '您的 100 点额度已用完' });
+  }
+
+  const idx = state.players.findIndex(p => p.id === id);
+  if (idx < 0) return res.status(404).json({ error: '未找到该选手' });
+
+  // 记录并更新
+  ipVotes[clientIp] = currentIpVotes + amount;
+  state.players[idx].votes = (state.players[idx].votes || 0) + amount;
+
+  saveData();
+  broadcast();
+  res.json({ ok: true, remainingVotes: 100 - ipVotes[clientIp] });
+});
+// ====== 投票 API 结束 ======
+
+
+// 选手 API (保持原样)
 app.post('/api/player/login', (req, res) => {
   const input = String((req.body || {}).id || '').trim();
   if (!input) return res.status(400).json({ error: '请输入选手ID' });
@@ -334,13 +345,8 @@ app.get('/api/player/state', (req, res) => {
 
   res.json({
     player: {
-      id: p.id,
-      avatar: p.avatar || '',
-      tier: p.tier || '',
-      damage: p.damage || '',
-      heroes: p.heroes,
-      kills: p.kills,
-      ranks: p.ranks
+      id: p.id, avatar: p.avatar || '', tier: p.tier || '', damage: p.damage || '',
+      heroes: p.heroes, kills: p.kills, ranks: p.ranks
     },
     currentGame: state.currentGame,
     maxGames: state.maxGames,
@@ -354,20 +360,15 @@ app.post('/api/player/hero', (req, res) => {
   const idx = state.players.findIndex(p => p.id === id);
   if (idx < 0) return res.status(404).json({ error: '未找到该选手' });
   const g = parseInt(game);
-  if (isNaN(g) || g < 0 || g >= state.maxGames) {
-    return res.status(400).json({ error: '无效局数' });
-  }
+  if (isNaN(g) || g < 0 || g >= state.maxGames) return res.status(400).json({ error: '无效局数' });
   const p = state.players[idx];
   const newHero = hero ? String(hero) : '';
 
   if (newHero) {
     for (let i = 0; i < state.maxGames; i++) {
-      if (i !== g && p.heroes[i] === newHero) {
-        return res.status(400).json({ error: '该英雄你已使用过，不能重复选择' });
-      }
+      if (i !== g && p.heroes[i] === newHero) return res.status(400).json({ error: '该英雄你已使用过' });
     }
   }
-
   p.heroes[g] = newHero;
   saveData();
   broadcast();
@@ -386,12 +387,6 @@ app.post('/api/player/profile', (req, res) => {
   res.json({ ok: true });
 });
 
-/* ============ 启动 ============ */
 app.listen(PORT, () => {
   console.log(`✅ 服务已启动: http://localhost:${PORT}`);
-  console.log(`📂 数据文件: ${DATA_FILE}`);
-  console.log(`📋 控制台:   /admin.html`);
-  console.log(`📺 展示页:   /display.html`);
-  console.log(`🎴 选手卡片: /player-card.html`);
-  console.log(`🎮 选手中心: /player.html`);
 });
