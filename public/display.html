@@ -6,16 +6,12 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { height: 100%; background: transparent; }
-  body {
-    height: 100%; background: rgba(12,13,17,.72);
-    background-image: radial-gradient(circle at 15% 20%, rgba(230,195,119,.05), transparent 45%), radial-gradient(circle at 85% 80%, rgba(230,195,119,.04), transparent 45%);
-    color: #e8e6e1; font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-    overflow: hidden; user-select: none; transition: background .3s;
-  }
+  body { height: 100%; background: rgba(12,13,17,.72); background-image: radial-gradient(circle at 15% 20%, rgba(230,195,119,.05), transparent 45%), radial-gradient(circle at 85% 80%, rgba(230,195,119,.04), transparent 45%); color: #e8e6e1; font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; overflow: hidden; user-select: none; transition: background .3s; }
   html.hidden-mode, body.hidden-mode { background: transparent !important; background-image: none !important; }
   body.hidden-mode #stage { display: none !important; visibility: hidden !important; }
   body.hidden-mode > *:not(script) { display: none !important; }
   #stage { width: 100%; height: 100%; padding: 20px 28px; display: flex; flex-direction: column; }
+  
   .stage-header { display: flex; align-items: center; padding: 0 6px 14px; border-bottom: 1px solid rgba(230,195,119,.25); margin-bottom: 16px; flex-shrink: 0; }
   .stage-title { font-size: 24px; font-weight: 800; color: #e6c377; letter-spacing: .12em; text-shadow: 0 0 20px rgba(230,195,119,.7), 0 2px 4px rgba(0,0,0,.9); }
   .stage-game { margin-left: 22px; padding: 5px 16px; background: rgba(230,195,119,.18); border: 1px solid rgba(230,195,119,.5); border-radius: 4px; font-size: 14px; color: #e6c377; letter-spacing: .1em; }
@@ -23,11 +19,16 @@
   .progress-num { color: #e6c377; font-weight: 700; font-size: 18px; }
   .progress-track { width: 150px; height: 6px; background: rgba(0,0,0,.5); border-radius: 3px; overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, #b8964a, #e6c377, #ffe9a8); box-shadow: 0 0 10px rgba(230,195,119,.6); transition: width .5s; }
+
   .hero-wall { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 14px; min-height: 0; }
   .hw-card { position: relative; border-radius: 12px; background: linear-gradient(160deg, rgba(30,26,20,.85), rgba(18,16,12,.92)); border: 1px solid rgba(230,195,119,.3); overflow: hidden; display: flex; flex-direction: column; transition: all .4s; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
   .hw-card.filled { border-color: rgba(230,195,119,.7); box-shadow: 0 0 20px rgba(230,195,119,.25), inset 0 0 30px rgba(230,195,119,.05); animation: cardIn .5s; }
   @keyframes cardIn { 0% { transform: scale(.92); box-shadow: 0 0 0 rgba(230,195,119,0); } 50% { transform: scale(1.03); box-shadow: 0 0 40px rgba(230,195,119,.75); } 100% { transform: scale(1); box-shadow: 0 0 20px rgba(230,195,119,.25); } }
   .hw-card.empty { border-style: dashed; border-color: rgba(230,195,119,.2); }
+  
+  /* 票王特效 */
+  .hw-card.top-voted { border-color: #e74c3c; box-shadow: 0 0 20px rgba(231,76,60,.4); }
+
   .hw-hero { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
   .hw-hero img { max-width: 90%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 20px rgba(230,195,119,.6)); }
   .hw-hero .placeholder { font-size: 100px; font-weight: 900; color: rgba(230,195,119,.15); text-shadow: 0 0 40px rgba(230,195,119,.3); line-height: 1; font-family: serif; }
@@ -38,17 +39,24 @@
   .hw-meta { flex: 1; min-width: 0; }
   .hw-name { font-size: 17px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hw-tier { font-size: 12px; color: #e6c377; margin-top: 2px; }
+  
+  .hw-votes { font-size: 13px; color: #ff9800; font-weight: 800; display: flex; align-items: center; gap: 4px; margin-top: 4px; text-shadow: 0 0 8px rgba(255,152,0,.5); }
+
   .hw-score { text-align: right; flex-shrink: 0; }
   .hw-score-now { font-size: 22px; font-weight: 900; color: #e6c377; text-shadow: 0 0 14px rgba(230,195,119,.7), 0 2px 4px rgba(0,0,0,.9); line-height: 1; }
   .hw-score-total { font-size: 11px; color: #a8acb6; margin-top: 3px; }
+
   .focus-wrap { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; min-height: 0; }
   .focus-hero { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
   .focus-hero img { width: 1280px; height: 720px; max-width: 90vw; max-height: 82vh; object-fit: contain; filter: drop-shadow(0 0 40px rgba(230,195,119,.8)) drop-shadow(0 0 80px rgba(230,195,119,.4)); animation: heroIn .6s; }
   @keyframes heroIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
   .focus-card { position: absolute; left: 50px; bottom: 50px; background: linear-gradient(160deg, rgba(20,17,12,.9), rgba(30,24,16,.88)); border: 2px solid rgba(230,195,119,.7); border-radius: 18px; padding: 28px 36px; box-shadow: 0 0 50px rgba(230,195,119,.5); min-width: 620px; z-index: 2; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-  .focus-card .name { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 0 24px rgba(230,195,119,.8), 0 2px 6px rgba(0,0,0,.9); margin-bottom: 10px; letter-spacing: .02em; }
-  .focus-card .meta { font-size: 18px; color: #b8bcc6; display: flex; gap: 22px; }
+  .focus-card .name { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 0 24px rgba(230,195,119,.8), 0 2px 6px rgba(0,0,0,.9); margin-bottom: 10px; letter-spacing: .02em; display: flex; align-items: center; gap: 16px; }
+  .focus-card .meta { font-size: 18px; color: #b8bcc6; display: flex; gap: 22px; align-items: center; }
   .focus-card .meta .tier { color: #e6c377; font-weight: 700; font-size: 20px; }
+  
+  .focus-votes { font-size: 16px; color: #ff9800; font-weight: 800; background: rgba(255,152,0,.15); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,152,0,.4); display: inline-flex; align-items: center; gap: 6px;}
+
   .focus-card .scores { display: flex; gap: 48px; padding-top: 20px; margin-top: 20px; border-top: 1px solid rgba(230,195,119,.3); }
   .focus-card .score-item { display: flex; flex-direction: column; gap: 6px; }
   .focus-card .score-label { font-size: 14px; color: #b8bcc6; letter-spacing: .12em; }
@@ -58,6 +66,7 @@
   .focus-badge.mp { color: #fff; background: #e74c3c; box-shadow: 0 0 30px rgba(231,76,60,.9); animation: mpPulse 1s infinite alternate; }
   .focus-badge.champ { color: #0c0d11; background: linear-gradient(135deg, #ffe9a8, #e6c377); box-shadow: 0 0 30px rgba(230,195,119,.9); }
   @keyframes mpPulse { from { box-shadow: 0 0 20px rgba(231,76,60,.6); } to { box-shadow: 0 0 40px rgba(231,76,60,1); } }
+
   .carousel-dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 9px; z-index: 5; }
   .carousel-dots .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(230,195,119,.3); transition: all .3s; }
   .carousel-dots .dot.active { background: #e6c377; box-shadow: 0 0 12px rgba(230,195,119,.9); transform: scale(1.4); }
@@ -66,6 +75,7 @@
   .carousel-idle { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
   .carousel-idle .hint { font-size: 22px; color: #e6c377; letter-spacing: .12em; text-shadow: 0 0 20px rgba(230,195,119,.7), 0 2px 6px rgba(0,0,0,.9); }
   .carousel-idle .sub { font-size: 14px; color: #8b8f9a; }
+
   .scoreboard-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .champ-banner { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; margin-bottom: 14px; background: linear-gradient(90deg, rgba(230,195,119,.2), rgba(230,195,119,.45), rgba(230,195,119,.2)); border: 1px solid rgba(230,195,119,.8); border-radius: 8px; font-size: 22px; font-weight: 800; color: #ffe9a8; text-shadow: 0 0 20px rgba(230,195,119,1), 0 2px 6px rgba(0,0,0,.9); animation: champGlow 2s infinite alternate; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   @keyframes champGlow { from { box-shadow: 0 0 20px rgba(230,195,119,.4); } to { box-shadow: 0 0 50px rgba(230,195,119,.9); } }
@@ -98,7 +108,7 @@
 <div id="stage"></div>
 
 <script>
-const API = 'https://match-production-529746ca.up.railway.app'; // 确保无尾斜杠
+const API = 'https://match-production-529746ca.up.railway.app'; 
 const stage = document.getElementById('stage');
 
 let currentData = null;
@@ -108,7 +118,6 @@ let carouselPhase = 'idle';
 const CAROUSEL_PLAYER_MS = 5000;
 const CAROUSEL_WALL_MS = 3000;
 
-// 预加载控制
 let isPreloaded = false;
 function preloadAssets() {
   if (isPreloaded) return;
@@ -117,7 +126,6 @@ function preloadAssets() {
     if (data.assets) {
       (data.assets.heroes || []).forEach(h => new Image().src = `/heroes/${encodeURIComponent(h)}`);
       (data.assets.avatars || []).forEach(a => new Image().src = `/avatars/${encodeURIComponent(a)}`);
-      console.log('✅ 后台静默预加载所有图片完成');
     }
   }).catch(e => console.error('预加载失败', e));
 }
@@ -127,9 +135,7 @@ const stripExt = n => String(n).replace(/\.[^/.]+$/, '');
 const fmtScore = n => (n || 0).toFixed(1);
 
 const evtSource = new EventSource(API + '/api/events');
-evtSource.onmessage = (e) => {
-  try { handleData(JSON.parse(e.data)); } catch (err) { console.error(err); }
-};
+evtSource.onmessage = (e) => { try { handleData(JSON.parse(e.data)); } catch (err) { console.error(err); } };
 evtSource.onerror = () => console.warn('SSE 断开，自动重连…');
 
 function setHiddenMode(on) {
@@ -143,7 +149,7 @@ function setHiddenMode(on) {
 }
 
 function handleData(data) {
-  if (!currentData) preloadAssets(); // 第一次收到数据时，触发后台预加载
+  if (!currentData) preloadAssets();
 
   const prevMode = currentData?.displayMode;
   const prevRunning = currentData?.carouselRunning;
@@ -152,11 +158,7 @@ function handleData(data) {
   const mode = data.displayMode || 'hero-wall';
   if (prevMode !== mode) stopCarousel();
 
-  if (mode === 'hidden') {
-    stopCarousel();
-    renderHidden();
-    return;
-  }
+  if (mode === 'hidden') { stopCarousel(); renderHidden(); return; }
   setHiddenMode(false);
   stage.style.display = '';
   stage.style.visibility = '';
@@ -195,6 +197,11 @@ function buildHeader(data, titleText) {
 function renderHeroWall(data) {
   const players = data.players || [];
   const g = data.currentGame;
+  
+  // 找最高票数
+  let maxVotes = 0;
+  data.standings.forEach(p => { if (p.votes > maxVotes) maxVotes = p.votes; });
+
   let cardsHtml = '';
   players.forEach(p => {
     const hero = (p.heroes && p.heroes[g]) || '';
@@ -215,12 +222,50 @@ function renderHeroWall(data) {
       total += r ? (r === 1 ? 10 : r === 2 ? 8 : r === 3 ? 7 : r === 4 ? 6 : r === 5 ? 5 : r === 6 ? 4 : r === 7 ? 3 : r === 8 ? 2 : r === 9 ? 1 : 0) : 0;
     }
 
+    // 票王判断
+    const isTopVoted = (maxVotes > 0 && p.votes === maxVotes);
+
     const avatarHtml = p.avatar ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" onerror="this.parentNode.textContent='${initial}'">` : initial;
 
     if (hero) {
-      cardsHtml += `<div class="hw-card filled"><div class="hw-hero"><img src="/heroes/${encodeURIComponent(hero)}" onerror="this.style.visibility='hidden'"><div class="hw-fade"></div></div><div class="hw-info"><div class="hw-avatar">${avatarHtml}</div><div class="hw-meta"><div class="hw-name">${safeId}</div>${tier ? `<div class="hw-tier">${tier}</div>` : ''}</div><div class="hw-score"><div class="hw-score-now">+${fmtScore(gameScore)}</div><div class="hw-score-total">总 ${fmtScore(total)}</div></div></div></div>`;
+      cardsHtml += `
+        <div class="hw-card filled ${isTopVoted ? 'top-voted' : ''}">
+          <div class="hw-hero">
+            <img src="/heroes/${encodeURIComponent(hero)}" onerror="this.style.visibility='hidden'">
+            <div class="hw-fade"></div>
+          </div>
+          <div class="hw-info">
+            <div class="hw-avatar">${avatarHtml}</div>
+            <div class="hw-meta">
+              <div class="hw-name">${safeId}</div>
+              ${tier ? `<div class="hw-tier">${tier}</div>` : ''}
+              <div class="hw-votes">🔥 ${p.votes}</div>
+            </div>
+            <div class="hw-score">
+              <div class="hw-score-now">+${fmtScore(gameScore)}</div>
+              <div class="hw-score-total">总 ${fmtScore(total)}</div>
+            </div>
+          </div>
+        </div>
+      `;
     } else {
-      cardsHtml += `<div class="hw-card empty"><div class="hw-hero"><div class="placeholder">?</div></div><div class="hw-info"><div class="hw-avatar">${avatarHtml}</div><div class="hw-meta"><div class="hw-name">${safeId}</div>${tier ? `<div class="hw-tier">${tier}</div>` : ''}</div><div class="hw-score"><div class="hw-score-now" style="color:#444;text-shadow:none">+0.0</div><div class="hw-score-total">总 ${fmtScore(total)}</div></div></div></div>`;
+      cardsHtml += `
+        <div class="hw-card empty ${isTopVoted ? 'top-voted' : ''}">
+          <div class="hw-hero"><div class="placeholder">?</div></div>
+          <div class="hw-info">
+            <div class="hw-avatar">${avatarHtml}</div>
+            <div class="hw-meta">
+              <div class="hw-name">${safeId}</div>
+              ${tier ? `<div class="hw-tier">${tier}</div>` : ''}
+              <div class="hw-votes">🔥 ${p.votes}</div>
+            </div>
+            <div class="hw-score">
+              <div class="hw-score-now" style="color:#444;text-shadow:none">+0.0</div>
+              <div class="hw-score-total">总 ${fmtScore(total)}</div>
+            </div>
+          </div>
+        </div>
+      `;
     }
   });
   stage.innerHTML = buildHeader(data, '永劫无间 · 英雄墙') + `<div class="hero-wall">${cardsHtml}</div>`;
@@ -247,7 +292,10 @@ function buildFocusBody(data, p, showDots) {
       <div class="focus-card">
         <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px;">
           <div class="hw-avatar" style="width:88px;height:88px;font-size:36px;">${avatarHtml}</div>
-          <div><div class="name">${safeId}</div><div class="meta">${p.tier ? `<span class="tier">${escapeHtml(p.tier)}</span>` : ''}${p.damage ? `<span>场伤 ${escapeHtml(String(p.damage))}</span>` : ''}</div></div>
+          <div>
+            <div class="name">${safeId} <span class="focus-votes">🔥 ${p.votes} 人气</span></div>
+            <div class="meta">${p.tier ? `<span class="tier">${escapeHtml(p.tier)}</span>` : ''}${p.damage ? `<span>场伤 ${escapeHtml(String(p.damage))}</span>` : ''}</div>
+          </div>
         </div>
         <div class="scores">
           <div class="score-item"><div class="score-label">总分</div><div class="score-val">${fmtScore(p.total)}</div></div>
