@@ -29,11 +29,18 @@
   .hero-wrap { position: absolute; right: 0px; top: -125px; width: 430px; height: 256px; display: flex; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
   .hero-wrap img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 20px rgba(230,195,119,.8)) drop-shadow(0 0 40px rgba(230,195,119,.4)); }
   .hero-wrap.empty::before { content: '?'; color: rgba(230,195,119,.3); font-size: 120px; font-weight: 900; text-shadow: 0 0 35px rgba(230,195,119,.5); }
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
-  .stat-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 12px 6px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+  
+  /* 改为 5 列 */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 16px; }
+  .stat-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 12px 4px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
   .stat-box .label { font-size: 12px; color: #8b8f9a; letter-spacing: .1em; }
   .stat-box .value { font-size: 22px; font-weight: 800; color: #e6c377; line-height: 1.2; text-shadow: 0 0 12px rgba(230,195,119,.45); }
   .stat-box .value.plain { color: #d5d3ce; font-weight: 700; text-shadow: none; font-size: 18px; }
+  
+  /* 人气值专属样式 */
+  .stat-box.votes-box .label { color: #ff9800; }
+  .stat-box.votes-box .value { color: #ff9800; text-shadow: 0 0 12px rgba(255,152,0,.5); }
+
   .current-line { margin-top: 14px; padding: 10px 14px; background: linear-gradient(90deg, rgba(230,195,119,.14) 0%, rgba(230,195,119,.04) 100%); border-left: 4px solid #e6c377; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
   .current-line .tag { color: #e6c377; font-weight: 700; letter-spacing: .1em; }
   .current-line .val { color: #fff; font-weight: 700; font-size: 16px; }
@@ -52,12 +59,16 @@
       <div class="total-mini">总分<span class="num" id="totalNum">0.0</span></div>
     </div>
   </div>
+  
   <div class="stats-grid">
     <div class="stat-box"><div class="label">总击杀</div><div class="value plain" id="totalKills">0</div></div>
     <div class="stat-box"><div class="label">吃鸡</div><div class="value plain" id="totalWins">0</div></div>
     <div class="stat-box"><div class="label">当前局得分</div><div class="value" id="currentScore">0.0</div></div>
     <div class="stat-box"><div class="label">当前局排名</div><div class="value plain" id="currentRank">-</div></div>
+    <!-- 新增：人气值格子 -->
+    <div class="stat-box votes-box"><div class="label">🔥 人气</div><div class="value" id="totalVotes">0</div></div>
   </div>
+  
   <div class="current-line"><span class="tag" id="currentTag">第1局 · 进行中</span><span class="val" id="currentDetail">0 杀 · 未排名</span></div>
   <div class="bottom-game-tag" id="bottomGameTag">第1局</div>
 </div>
@@ -69,7 +80,6 @@ let currentRenderedId = null;
 let switchTimer = null;
 const SWITCH_DURATION = 500;
 
-// 预加载控制
 let isPreloaded = false;
 function preloadAssets() {
   if (isPreloaded) return;
@@ -78,9 +88,8 @@ function preloadAssets() {
     if (data.assets) {
       (data.assets.heroes || []).forEach(h => new Image().src = `/heroes/${encodeURIComponent(h)}`);
       (data.assets.avatars || []).forEach(a => new Image().src = `/avatars/${encodeURIComponent(a)}`);
-      console.log('✅ 导播卡后台预加载完成');
     }
-  }).catch(e => console.error('预加载失败', e));
+  });
 }
 
 function escapeHtml(str) { return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
@@ -112,6 +121,9 @@ function updateCardContent(p, data) {
   }
   document.getElementById('totalKills').textContent = totalKills;
   document.getElementById('totalWins').textContent = totalWins;
+  
+  // 更新人气值
+  document.getElementById('totalVotes').textContent = p.votes || 0;
 
   const cg = currentGame || 0;
   const currentGameData = p.games[cg] || { kills: 0, rank: null, gameTotal: 0, hero: '' };
@@ -140,7 +152,7 @@ function updateCardContent(p, data) {
 }
 
 function render(data) {
-  if (!isPreloaded) preloadAssets(); // 第一次接数据触发预加载
+  if (!isPreloaded) preloadAssets();
   const { standings, cardPlayerId } = data;
   if (!cardPlayerId || !standings || standings.length === 0) {
     if (switchTimer) clearTimeout(switchTimer); switchTimer = null; currentRenderedId = null; card.classList.remove('show'); return;
