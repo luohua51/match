@@ -6,144 +6,85 @@
 <title>永劫无间 · 赛点积分赛实时战报</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0c0d11; color: #e8e6e1;
-    font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-    padding: 20px; min-height: 100vh;
-    background-image: radial-gradient(circle at 50% 0%, rgba(230,195,119,.05), transparent 40%);
-  }
+  body { background: #0c0d11; color: #e8e6e1; font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; padding: 20px; min-height: 100vh; background-image: radial-gradient(circle at 50% 0%, rgba(230,195,119,.05), transparent 40%); }
   .container { max-width: 900px; margin: 0 auto; }
 
-  /* 顶部信息 */
-  .header {
-    text-align: center; margin-bottom: 30px; padding-bottom: 20px;
-    border-bottom: 1px solid rgba(230,195,119,.2);
-  }
+  .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(230,195,119,.2); }
   .title { font-size: 28px; color: #e6c377; font-weight: 800; letter-spacing: .1em; text-shadow: 0 0 20px rgba(230,195,119,.4); }
   .subtitle { font-size: 14px; color: #8b8f9a; margin-top: 12px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;}
   .subtitle span { color: #e6c377; font-weight: 700; }
 
-  /* ===== 新增：直播间跳转按钮 ===== */
-  .live-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    margin-top: 16px; padding: 10px 24px;
-    background: linear-gradient(135deg, rgba(230,195,119,.15), rgba(230,195,119,.05));
-    border: 1px solid rgba(230,195,119,.6); border-radius: 30px;
-    color: #e6c377; font-size: 15px; font-weight: 700; text-decoration: none;
-    letter-spacing: .1em; transition: all .3s;
-    box-shadow: 0 0 15px rgba(230,195,119,.2);
-  }
-  .live-btn:hover {
-    background: rgba(230,195,119,.3);
-    box-shadow: 0 0 25px rgba(230,195,119,.6);
-    transform: translateY(-2px);
-  }
-  .live-btn .icon {
-    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-    background: #e74c3c; animation: pulseRed 1s infinite alternate;
-  }
-  @keyframes pulseRed {
-    from { box-shadow: 0 0 5px #e74c3c; }
-    to { box-shadow: 0 0 15px #e74c3c; }
-  }
+  .live-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; padding: 10px 24px; background: linear-gradient(135deg, rgba(230,195,119,.15), rgba(230,195,119,.05)); border: 1px solid rgba(230,195,119,.6); border-radius: 30px; color: #e6c377; font-size: 15px; font-weight: 700; text-decoration: none; letter-spacing: .1em; transition: all .3s; box-shadow: 0 0 15px rgba(230,195,119,.2); }
+  .live-btn:hover { background: rgba(230,195,119,.3); box-shadow: 0 0 25px rgba(230,195,119,.6); transform: translateY(-2px); }
+  .live-btn .icon { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; animation: pulseRed 1s infinite alternate; }
+  @keyframes pulseRed { from { box-shadow: 0 0 5px #e74c3c; } to { box-shadow: 0 0 15px #e74c3c; } }
 
-  /* 冠军横幅 */
-  .champ-banner {
-    background: linear-gradient(90deg, rgba(230,195,119,.1), rgba(230,195,119,.3), rgba(230,195,119,.1));
-    border: 1px solid rgba(230,195,119,.6); border-radius: 8px;
-    padding: 12px; margin-bottom: 20px; text-align: center;
-    font-size: 18px; font-weight: 800; color: #ffe9a8;
-    box-shadow: 0 0 20px rgba(230,195,119,.3);
-    display: none; animation: pulse 2s infinite alternate;
-  }
+  .champ-banner { background: linear-gradient(90deg, rgba(230,195,119,.1), rgba(230,195,119,.3), rgba(230,195,119,.1)); border: 1px solid rgba(230,195,119,.6); border-radius: 8px; padding: 12px; margin-bottom: 20px; text-align: center; font-size: 18px; font-weight: 800; color: #ffe9a8; box-shadow: 0 0 20px rgba(230,195,119,.3); display: none; animation: pulse 2s infinite alternate; }
   @keyframes pulse { from { box-shadow: 0 0 10px rgba(230,195,119,.2); } to { box-shadow: 0 0 30px rgba(230,195,119,.6); } }
 
-  /* 列表总容器 */
-  .leaderboard {
-    display: flex; flex-direction: column; gap: 8px;
-  }
+  .leaderboard { display: flex; flex-direction: column; gap: 8px; }
 
-  /* 选手单行（手风琴表头） */
-  .player-row {
-    background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.08);
-    border-radius: 10px; overflow: hidden; transition: all .3s;
-  }
+  .player-row { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; transition: all .3s; }
   .player-row:hover { background: rgba(255,255,255,.04); }
   .player-row.expanded { border-color: rgba(230,195,119,.4); background: rgba(230,195,119,.03); }
   .player-row.champion { border-color: rgba(255,215,0,.5); background: rgba(255,215,0,.05); }
+  
+  /* 票王特效 */
+  .player-row.top-voted { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231,76,60,.3); }
 
-  /* 表头主体 */
-  .row-header {
-    display: flex; align-items: center; padding: 12px 16px;
-    cursor: pointer; user-select: none; gap: 16px;
-  }
+  .row-header { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; user-select: none; gap: 16px; }
   .place { font-size: 20px; font-weight: 900; color: #8b8f9a; width: 36px; text-align: center; }
   .place.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,.5); }
   .place.p2 { color: #e0e0e0; text-shadow: 0 0 10px rgba(224,224,224,.4); }
   .place.p3 { color: #d18a4a; text-shadow: 0 0 10px rgba(209,138,74,.4); }
 
-  .avatar-wrap {
-    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,.1); background: rgba(0,0,0,.3);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900; color: #e6c377; overflow: hidden;
-  }
+  .avatar-wrap { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,.1); background: rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #e6c377; overflow: hidden; }
   .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
 
   .p-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .p-name { font-size: 18px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .p-meta { font-size: 12px; color: #8b8f9a; display: flex; gap: 12px; align-items: center; }
+  .p-meta { font-size: 12px; color: #8b8f9a; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .p-meta .tier { color: #e6c377; font-weight: 700; }
   .p-meta .badge { color: #fff; background: #e74c3c; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+  .p-meta .votes-badge { color: #ff9800; font-weight: 700; display: flex; align-items: center; gap: 2px; }
 
   .p-score { font-size: 22px; font-weight: 900; color: #e6c377; text-align: right; min-width: 60px; text-shadow: 0 0 10px rgba(230,195,119,.3); }
-  
-  /* 箭头动画 */
   .arrow { width: 24px; text-align: center; color: #666; font-size: 16px; transition: transform .3s; }
   .player-row.expanded .arrow { transform: rotate(180deg); color: #e6c377; }
 
-  /* 展开的内容（手风琴内容区） */
-  .row-content {
-    display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease-out;
-    background: rgba(0,0,0,.2); border-top: 1px solid rgba(255,255,255,0);
-  }
-  .player-row.expanded .row-content {
-    grid-template-rows: 1fr; border-top-color: rgba(255,255,255,.05);
-  }
+  .row-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease-out; background: rgba(0,0,0,.2); border-top: 1px solid rgba(255,255,255,0); }
+  .player-row.expanded .row-content { grid-template-rows: 1fr; border-top-color: rgba(255,255,255,.05); }
   .content-inner { overflow: hidden; }
-  .game-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 16px;
-  }
-  @media (max-width: 768px) {
-    .game-grid { grid-template-columns: repeat(2, 1fr); }
-    .game-grid .game-card:nth-child(5) { grid-column: span 2; }
-  }
+  
+  .game-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 16px 16px 0 16px; }
+  @media (max-width: 768px) { .game-grid { grid-template-columns: repeat(2, 1fr); } .game-grid .game-card:nth-child(5) { grid-column: span 2; } }
 
-  /* 单局卡片 */
-  .game-card {
-    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
-    border-radius: 8px; overflow: hidden; position: relative;
-    display: flex; flex-direction: column;
-  }
-  .game-img {
-    width: 100%; aspect-ratio: 16/9; background: #15161c;
-    position: relative; display: flex; align-items: center; justify-content: center;
-  }
-  .game-img img {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; opacity: .8;
-  }
+  .game-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .game-img { width: 100%; aspect-ratio: 16/9; background: #15161c; position: relative; display: flex; align-items: center; justify-content: center; }
+  .game-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .8; }
   .game-img .empty-text { color: #444; font-size: 12px; font-weight: 700; }
   
-  .game-info {
-    padding: 6px 4px; text-align: center; font-size: 12px; color: #b8bcc6;
-    background: rgba(0,0,0,.6); backdrop-filter: blur(2px);
-    display: flex; flex-direction: column; gap: 2px;
-  }
+  .game-info { padding: 6px 4px; text-align: center; font-size: 12px; color: #b8bcc6; background: rgba(0,0,0,.6); backdrop-filter: blur(2px); display: flex; flex-direction: column; gap: 2px; }
   .game-info .g-title { color: #e6c377; font-weight: 700; font-size: 11px; }
   .game-info .g-stats { display: flex; justify-content: center; gap: 8px; }
   .game-info .g-stats span { color: #fff; font-weight: 600; }
-  
+
+  /* ====== 投票区 ====== */
+  .vote-section {
+    padding: 16px; background: rgba(230,195,119,.05); border-top: 1px dashed rgba(230,195,119,.2);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .vote-info { font-size: 14px; color: #b8bcc6; }
+  .vote-info span { color: #ff9800; font-weight: 800; font-size: 18px; }
+  .vote-actions { display: flex; gap: 10px; }
+  .vote-btn {
+    background: rgba(255,152,0,.15); border: 1px solid rgba(255,152,0,.6);
+    color: #ff9800; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+    font-size: 14px; font-weight: 700; transition: all .2s;
+  }
+  .vote-btn:hover:not(:disabled) { background: rgba(255,152,0,.3); box-shadow: 0 0 15px rgba(255,152,0,.4); }
+  .vote-btn:disabled { opacity: .3; cursor: not-allowed; border-color: #555; color: #888; }
+
   .footer { text-align: center; color: #555; font-size: 12px; margin-top: 30px; padding-bottom: 20px; }
 </style>
 </head>
@@ -156,13 +97,10 @@
       <div>当前局数：<span id="currentGameText">第 1 局</span></div>
       <div>赛点线：<span id="thresholdText">39 分</span></div>
     </div>
-    
-    <!-- 👇 新增的跳转直播间按钮 👇 -->
-    <!-- 请将下方的 href="这里改成你们的直播间网址" 替换掉 -->
-    <a class="live-btn" href="https://v.douyin.com/3prh7qq_w-o/" target="_blank">
+    <!-- 请替换为真实的直播间地址 -->
+    <a class="live-btn" href="https://www.douyin.com/" target="_blank">
       <span class="icon"></span> 进入赛事直播间
     </a>
-    
   </div>
 
   <div class="champ-banner" id="champBanner">
@@ -174,16 +112,19 @@
   </div>
 
   <div class="footer">
-    数据实时同步中 · 点击选手栏展开详细战绩
+    数据实时同步中 · 点击选手栏展开详细战绩并投人气
   </div>
 </div>
 
 <script>
-// 请确保结尾没有斜杠
 const API = 'https://match-production-529746ca.up.railway.app';
 
 let expandedPlayers = new Set();
 let state = null;
+
+// 观众的人气值状态
+let myVotes = localStorage.getItem('naraka_votes_remaining');
+myVotes = myVotes !== null ? parseInt(myVotes) : 100; // 默认 100 点额度
 
 function escapeHtml(str) { return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
 const stripExt = n => String(n).replace(/\.[^/.]+$/, '');
@@ -203,6 +144,10 @@ async function loadData() {
 function render(data) {
   document.getElementById('currentGameText').textContent = `第 ${data.currentGame + 1} 局`;
   document.getElementById('thresholdText').textContent = `${data.threshold} 分`;
+
+  // 找最高票数，用于特效
+  let maxVotes = 0;
+  data.standings.forEach(p => { if (p.votes > maxVotes) maxVotes = p.votes; });
 
   const champ = data.standings.find(p => p.isChampion);
   const champBanner = document.getElementById('champBanner');
@@ -224,17 +169,19 @@ function render(data) {
     const isExpanded = expandedPlayers.has(p.id);
     const isChamp = p.isChampion;
     const isMP = p.total >= data.threshold && !isChamp;
+    const isTopVoted = (maxVotes > 0 && p.votes === maxVotes); // 票王高亮
     
-    const avatarHtml = p.avatar 
-      ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" loading="lazy" onerror="this.parentNode.textContent='${initial}'">`
-      : initial;
+    const avatarHtml = p.avatar ? `<img src="/avatars/${encodeURIComponent(p.avatar)}" loading="lazy" onerror="this.parentNode.textContent='${initial}'">` : initial;
 
     let badgeHtml = '';
     if (isChamp) badgeHtml = '<span class="badge" style="background:#e6c377; color:#0c0d11;">冠军</span>';
     else if (isMP) badgeHtml = '<span class="badge">赛点</span>';
 
+    // 计算投票按钮状态
+    const btnDisabled = myVotes <= 0;
+
     html += `
-      <div class="player-row ${isExpanded ? 'expanded' : ''} ${isChamp ? 'champion' : ''}" data-id="${p.id}">
+      <div class="player-row ${isExpanded ? 'expanded' : ''} ${isChamp ? 'champion' : ''} ${isTopVoted ? 'top-voted' : ''}" data-id="${p.id}">
         <div class="row-header" onclick="toggleExpand('${p.id}')">
           <div class="place ${placeCls}">${place}</div>
           <div class="avatar-wrap">${avatarHtml}</div>
@@ -243,6 +190,7 @@ function render(data) {
             <div class="p-meta">
               ${p.tier ? `<span class="tier">${escapeHtml(p.tier)}</span>` : '<span>未填段位</span>'}
               ${badgeHtml}
+              <span class="votes-badge">🔥 ${p.votes} 人气</span>
             </div>
           </div>
           <div class="p-score">${fmtScore(p.total)}</div>
@@ -252,6 +200,15 @@ function render(data) {
           <div class="content-inner">
             <div class="game-grid">
               ${renderGameCards(p, data.maxGames)}
+            </div>
+            <!-- 投票区域 -->
+            <div class="vote-section">
+              <div class="vote-info">你的剩余打榜额度：<span id="myVotesText">${myVotes}</span> 点</div>
+              <div class="vote-actions">
+                <button class="vote-btn" onclick="votePlayer('${p.id}', 10)" ${btnDisabled ? 'disabled' : ''}>+10</button>
+                <button class="vote-btn" onclick="votePlayer('${p.id}', 50)" ${btnDisabled ? 'disabled' : ''}>+50</button>
+                <button class="vote-btn" onclick="votePlayer('${p.id}', 100)" ${btnDisabled ? 'disabled' : ''}>梭哈</button>
+              </div>
             </div>
           </div>
         </div>
@@ -267,29 +224,10 @@ function renderGameCards(player, maxGames) {
   for (let g = 0; g < maxGames; g++) {
     const game = player.games[g];
     if (!game || (!game.kills && !game.rank && !game.hero)) {
-      html += `
-        <div class="game-card">
-          <div class="game-img"><span class="empty-text">未进行</span></div>
-          <div class="game-info">
-            <div class="g-title">第${g + 1}局</div>
-            <div class="g-stats" style="color:#555;">等待数据</div>
-          </div>
-        </div>
-      `;
+      html += `<div class="game-card"><div class="game-img"><span class="empty-text">未进行</span></div><div class="game-info"><div class="g-title">第${g + 1}局</div><div class="g-stats" style="color:#555;">等待数据</div></div></div>`;
     } else {
       const heroImg = game.hero ? `<img src="/heroes/${encodeURIComponent(game.hero)}" loading="lazy">` : '';
-      html += `
-        <div class="game-card">
-          <div class="game-img">${heroImg}</div>
-          <div class="game-info">
-            <div class="g-title">第${g + 1}局</div>
-            <div class="g-stats">
-              <span>${game.kills || 0}杀</span>
-              <span>${game.rank ? '#' + game.rank : '—'}</span>
-            </div>
-          </div>
-        </div>
-      `;
+      html += `<div class="game-card"><div class="game-img">${heroImg}</div><div class="game-info"><div class="g-title">第${g + 1}局</div><div class="g-stats"><span>${game.kills || 0}杀</span><span>${game.rank ? '#' + game.rank : '—'}</span></div></div></div>`;
     }
   }
   return html;
@@ -298,7 +236,6 @@ function renderGameCards(player, maxGames) {
 function toggleExpand(id) {
   const row = document.querySelector(`.player-row[data-id="${id}"]`);
   if (!row) return;
-  
   if (expandedPlayers.has(id)) {
     expandedPlayers.delete(id);
     row.classList.remove('expanded');
@@ -308,18 +245,42 @@ function toggleExpand(id) {
   }
 }
 
+// 👇 投票逻辑
+async function votePlayer(id, amount) {
+  if (myVotes < amount) {
+    alert('您的额度不足！');
+    return;
+  }
+  try {
+    const res = await fetch(API + '/api/player/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, amount })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || '投票失败');
+      return;
+    }
+    // 更新本地额度
+    myVotes = data.remainingVotes;
+    localStorage.setItem('naraka_votes_remaining', myVotes);
+    
+    // 因为后端会实时广播，我们不需要修改 DOM，SSE 会收到更新。
+    // 这里直接自己重绘一下，为了立即更新界面的剩余额度和按钮状态
+    render(state);
+  } catch (e) {
+    alert('网络错误，请稍后再试');
+  }
+}
+
 const evtSource = new EventSource(API + '/api/events');
 evtSource.onmessage = (e) => {
   try {
     const data = JSON.parse(e.data);
     state = data;
     render(data); 
-  } catch (err) {
-    console.error('解析数据失败', err);
-  }
-};
-evtSource.onerror = () => {
-  console.warn('SSE 连接断开，尝试重连...');
+  } catch (err) { console.error(err); }
 };
 
 loadData();
