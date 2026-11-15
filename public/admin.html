@@ -94,8 +94,33 @@
 </style>
 </head>
 <body>
+
+<!-- ====== 新增：管理员验证遮罩层 ====== -->
+<div id="authOverlay" style="display:none; position:fixed; inset:0; background:#0c0d11; z-index:99999; flex-direction:column; align-items:center; justify-content:center; background-image: radial-gradient(circle at 50% 0%, rgba(230,195,119,.08), transparent 40%);">
+  <div style="background: rgba(255,255,255,.02); border: 1px solid rgba(230,195,119,.3); padding: 40px; border-radius: 16px; width: 340px; text-align: center; box-shadow: 0 0 40px rgba(230,195,119,.1);">
+    <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+    <h2 style="color:#e6c377; margin-bottom: 8px; font-size: 20px; font-weight: 800; letter-spacing: .1em;">管理员验证</h2>
+    <p style="color:#8b8f9a; font-size: 13px; margin-bottom: 24px;">此页面为赛事控制台，非管理员请勿操作</p>
+    
+    <input type="password" id="authPasswordInput" placeholder="请输入管理密码" style="width:100%; padding:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.15); color:#fff; border-radius:8px; margin-bottom:16px; outline:none; font-size:15px; text-align:center;">
+    
+    <button id="authSubmitBtn" style="width:100%; padding:12px; background:rgba(230,195,119,.15); border:1px solid rgba(230,195,119,.6); color:#e6c377; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px; letter-spacing: .1em; transition: .2s;">验证并进入</button>
+    
+    <div id="authError" style="color:#e74c3c; font-size:13px; margin-top:12px; min-height:18px;"></div>
+    
+    <!-- 给小白指路 -->
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,.1); font-size: 13px; color: #8b8f9a;">
+      如果你是选手或观众，请前往：<br><br>
+      <div style="display:flex; justify-content:center; gap: 15px;">
+        <a href="index.html" style="color:#e6c377; text-decoration:none; border-bottom:1px solid #e6c377; padding-bottom:2px;">看实时战绩</a>
+        <a href="player.html" style="color:#e6c377; text-decoration:none; border-bottom:1px solid #e6c377; padding-bottom:2px;">去选手中心</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ====== 遮罩层结束 ====== -->
+
   <h1>永劫无间 · 赛点积分赛控制台</h1>
-  <!-- 修改点1：提示文字修改为 10/8/7/6/5/4/3/2/1 和 39分 -->
   <div class="sub">击杀分 1.5 / 个 · 排名分 10/8/7/6/5/4/3/2/1 · 赛点 39 分 · 五局制</div>
 
   <div class="toolbar">
@@ -166,7 +191,39 @@
   </div>
 
 <script>
-const API = 'https://match-production-529746ca.up.railway.app';
+// ====== 拦截验证逻辑 ======
+const ADMIN_PWD = 'xiaohubei'; // 你的专属密码
+const authOverlay = document.getElementById('authOverlay');
+const authInput = document.getElementById('authPasswordInput');
+const authBtn = document.getElementById('authSubmitBtn');
+const authError = document.getElementById('authError');
+
+// 检查本地是否已经记住密码
+if (localStorage.getItem('naraka_admin_auth') !== ADMIN_PWD) {
+  authOverlay.style.display = 'flex';
+} else {
+  authOverlay.style.display = 'none';
+}
+
+function verifyAdmin() {
+  if (authInput.value === ADMIN_PWD) {
+    localStorage.setItem('naraka_admin_auth', ADMIN_PWD); // 记住密码
+    authOverlay.style.display = 'none'; // 放行
+  } else {
+    authError.textContent = '密码错误，请重新输入';
+    authInput.value = '';
+  }
+}
+
+authBtn.addEventListener('click', verifyAdmin);
+authInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') verifyAdmin();
+});
+// ====== 拦截验证逻辑结束 ======
+
+
+// ⚠️ 请确保这里是你 Railway 的地址，且结尾没有斜杠
+const API = 'https://match-production-529746ca.up.railway.app'; 
 let state = null;
 let currentGame = 0;
 let heroOptions = [];
@@ -203,7 +260,6 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
-// 修改点2：积分计算逻辑
 function calcGameScore(kills, rank) {
   const kp = (kills || 0) * 1.5;
   const rp = rank
@@ -496,6 +552,7 @@ evtSource.onmessage = (e) => {
   } catch (err) { /* 忽略 */ }
 };
 
+// 初始加载
 loadState();
 </script>
 </body>
